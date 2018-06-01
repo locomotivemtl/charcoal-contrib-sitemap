@@ -1,4 +1,4 @@
-Charcoal FooBar
+Charcoal Sitemap
 ===============
 
 [![License][badge-license]][charcoal-contrib-sitemap]
@@ -69,7 +69,7 @@ properties are renderable by objects. Let's take the example below:
                     "l10n": true,
                     "boilerplate/object/section": {
                         "label": "{{title}}",
-                        "url": "{{url}}", // Might be null if routable.
+                        "url": "{{url}}",
                         "filters": {
                             "active": {
                                 "property": "active",

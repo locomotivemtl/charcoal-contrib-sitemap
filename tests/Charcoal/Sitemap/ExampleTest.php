@@ -2,11 +2,11 @@
 
 namespace Charcoal\Tests\Sitemap;
 
-// From 'charcoal-contrib-foobar'
+// From 'charcoal-contrib-sitemap'
 use Charcoal\Tests\AbstractTestCase;
 
 /**
- * @coversDefaultClass Charcoal\FooBar\ExampleInterface
+ * @coversDefaultClass Charcoal\Sitemap\ExampleInterface
  */
 class ExampleTest extends AbstractTestCase
 {
