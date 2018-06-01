@@ -65,8 +65,8 @@ properties are renderable by objects. Let's take the example below:
     {
         "sitemap": {
             "xml": {
+                "l10n": true,
                 "objects": {
-                    "l10n": true,
                     "boilerplate/object/section": {
                         "label": "{{title}}",
                         "url": "{{url}}",
@@ -103,6 +103,12 @@ on the condition `isAnObjectParent` called on the parent.
 The builder returns only an array. You need to make your own conversation if you need
 another format.
 
+Include the service provider:
+
+```json
+"charcoal/sitemap/service-provider/sitemap": {}
+```
+
 Given the settings above:
 
 ```php
@@ -120,7 +126,7 @@ as an XML for crawlers to read.
 
 // Import routes
 $this->addFile(__DIR__ . '/routes.json');
-$this->addFilter(__DIR__.'../vendor/locomotivemtl/charcoal-contrib-sitemap/config/routes.json');
+$this->addFile(__DIR__.'/../vendor/locomotivemtl/charcoal-contrib-sitemap/config/routes.json');
 
 // [...]
 ```

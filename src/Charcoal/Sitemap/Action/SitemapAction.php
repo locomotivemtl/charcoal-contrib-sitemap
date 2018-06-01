@@ -8,6 +8,7 @@ use Pimple\Container;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
+use Charcoal\App\Action\AbstractAction;
 use Charcoal\Translator\TranslatorAwareTrait;
 
 /**
@@ -16,6 +17,11 @@ use Charcoal\Translator\TranslatorAwareTrait;
 class SitemapAction extends AbstractAction
 {
     use TranslatorAwareTrait;
+
+    /**
+     * @var string
+     */
+    protected $baseUrl;
 
     /**
      * Inject dependencies from a DI Container.
@@ -28,6 +34,7 @@ class SitemapAction extends AbstractAction
         parent::setDependencies($container);
 
         $this->sitemapBuilder = $container['charcoal/sitemap/builder'];
+        $this->baseUrl = $container['base-url'];
     }
 
     /**

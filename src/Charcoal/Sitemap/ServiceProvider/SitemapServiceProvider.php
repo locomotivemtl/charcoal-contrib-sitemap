@@ -6,7 +6,7 @@ namespace Charcoal\Sitemap\ServiceProvider;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
-use Charcoal\Sitemap\Builder;
+use Charcoal\Sitemap\Service\Builder;
 
 
 /**
