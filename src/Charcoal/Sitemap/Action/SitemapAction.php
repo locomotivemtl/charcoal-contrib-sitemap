@@ -2,14 +2,12 @@
 
 namespace Charcoal\Sitemap\Action;
 
-use SimpleXMLElement;
-
+use Charcoal\App\Action\AbstractAction;
+use Charcoal\Translator\TranslatorAwareTrait;
 use Pimple\Container;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-
-use Charcoal\App\Action\AbstractAction;
-use Charcoal\Translator\TranslatorAwareTrait;
+use SimpleXMLElement;
 
 /**
  * Class SitemapAction
@@ -34,7 +32,7 @@ class SitemapAction extends AbstractAction
         parent::setDependencies($container);
 
         $this->sitemapBuilder = $container['charcoal/sitemap/builder'];
-        $this->baseUrl = $container['base-url'];
+        $this->baseUrl        = $container['base-url'];
     }
 
     /**
@@ -50,7 +48,7 @@ class SitemapAction extends AbstractAction
     {
         $this->setMode(self::MODE_XML);
 
-        $sitemap = $this->sitemapBuilder->build('xml');
+        $sitemap   = $this->sitemapBuilder->build('xml');
         $this->xml = $this->toXml($sitemap);
 
         $this->setSuccess(true);
@@ -61,9 +59,10 @@ class SitemapAction extends AbstractAction
     protected function toXml($map)
     {
         $str = '<?xml version="1.0" encoding="UTF-8"?><urlset '
-              .'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
-              .'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
-              .'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"/>';
+            . 'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+            . 'xmlns:xhtml="http://www.w3.org/1999/xhtml" '
+            . '/>';
+
 
         $xml = new SimpleXmlElement($str);
 
@@ -102,7 +101,7 @@ class SitemapAction extends AbstractAction
                             parse_url($altUrl, PHP_URL_HOST) !== null) {
                             continue;
                         }
-                        $xhtml = $url->addChild('xhtml:link', null,'xhtml');
+                        $xhtml = $url->addChild('xhtml:link', null, 'xhtml');
                         $xhtml->addAttribute('rel', 'alternate');
                         $xhtml->addAttribute('hreflang', $alt['lang']);
                         $xhtml->addAttribute('href', $altUrl);
