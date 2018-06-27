@@ -40,7 +40,9 @@ $ composer require locomotivemtl/charcoal-contrib-sitemap
 
 ### Dependencies
 - [Charcoal-factory][charcoal-app] ~0.8
+- [Charcoal-factory][charcoal-factory] ~0.4
 - [Charcoal-object][charcoal-object] ~0.4
+- [Charcoal-translator][charcoal-translator] ~0.3
 
 #### Required
 
@@ -64,8 +66,9 @@ properties are renderable by objects. Let's take the example below:
 ```json
     {
         "sitemap": {
-            "xml": {
+            "footer_sitemap": {
                 "l10n": true,
+                "check_active_routes": true,
                 "objects": {
                     "boilerplate/object/section": {
                         "label": "{{title}}",
@@ -91,10 +94,11 @@ properties are renderable by objects. Let's take the example below:
         }
     }
 ```
-The `xml` sitemap is defined to be `l10n` (will output all languages as canonical) and defines
-the `boilerplate/object/section` object to create the list. The section object has `children`,
-in that case `boilerplate/object/section-children`, which will be output under the `boilerplate/object/section`
-on the condition `isAnObjectParent` called on the parent.
+The `footer_sitemap` sitemap is defined to be `l10n` (will output all languages as alternates) and defines
+the `boilerplate/object/section` object to create the list. Note that is the object is of RoutableInterface,
+it will automatically test the `isActiveRoute` condition. You can disable the option by setting `check_active_routes`
+to `false` on the list. The section object has `children`, in that case `boilerplate/object/section-children`, 
+which will be output under the `boilerplate/object/section` on the condition `isAnObjectParent` called on the parent.
 
 ## Usage
 
@@ -113,7 +117,7 @@ Given the settings above:
 
 ```php
 $builder = $container['charcoal/sitemap/builder'];
-$sitemap = $builder->build('xml'); // xml is the ident of the settings you want.
+$sitemap = $builder->build('footer_sitemap'); // footer_sitemap is the ident of the settings you want.
 ```
 
 ### Sitemap.xml
