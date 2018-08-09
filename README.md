@@ -69,6 +69,7 @@ properties are renderable by objects. Let's take the example below:
             "footer_sitemap": {
                 "l10n": true,
                 "check_active_routes": true,
+                "relative_urls": false,
                 "objects": {
                     "boilerplate/object/section": {
                         "label": "{{title}}",
@@ -119,6 +120,26 @@ Given the settings above:
 $builder = $container['charcoal/sitemap/builder'];
 $sitemap = $builder->build('footer_sitemap'); // footer_sitemap is the ident of the settings you want.
 ```
+You can also use the `SitemapBuilderAwareTrait`, which includes the setter and getter for the sitemap builder, in order
+to use it with minimal code in every necessary class.
+
+
+### Options
+
+| Key                   | Values                | Default           | Description 
+|:---                   |:---:                  |:---:              |---          
+|`l10n`                 | true/false            | false             | Defines if the sitemap includes all the languages defined in the configurations  
+| `check_active_routes` | true/false            | false             | Checks on every object if the route is active (using isActiveRoute)
+| `relative_urls`       | true/false            | false             | Returns either the absolute URL or the relative URL
+| `locale`              | string                | Current locale    | You can choose the locale for the sitemap. (Unless l10n)
+| `objects`             | object class string   | n/a               | The objects and their configurations  
+| `objects`             |-                      |-                  |-   
+| `filters`             | Array                 | n/a               | Filters for the list  
+| `orders`              | Array                 | n/a               | Orders for the list  
+| `children`            | Array                 | n/a               | Uses the same options as `objects`
+| `url`                 | string                | {{url}}           | Renderable URL, in case the method is not `url`
+| `label`               | string                | {{title}}         | Renderable label, in case it's not `title`  
+| `data`                | Array                 | n/a               | Any order data you want in. This is recursively rendered on the object  
 
 ### Sitemap.xml
 This contrib provides a route for `sitemap.xml` that dynamically loads the `xml` config and outputs it 

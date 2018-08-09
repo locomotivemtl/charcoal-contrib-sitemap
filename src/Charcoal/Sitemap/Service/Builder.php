@@ -2,25 +2,25 @@
 
 namespace Charcoal\Sitemap\Service;
 
+use Charcoal\Factory\FactoryInterface;
+use Charcoal\Loader\CollectionLoader;
+use Charcoal\Object\CategoryInterface;
+use Charcoal\Object\HierarchicalInterface;
+use Charcoal\Object\RoutableInterface;
+use Charcoal\Translator\TranslatorAwareTrait;
+use Charcoal\View\ViewableInterface;
 use InvalidArgumentException;
 use RuntimeException;
 
 // From 'charcoal-factory'
-use Charcoal\Factory\FactoryInterface;
 
 // From 'charcoal-core'
-use Charcoal\Loader\CollectionLoader;
 
 // From 'charcoal-object'
-use Charcoal\Object\CategoryInterface;
-use Charcoal\Object\HierarchicalInterface;
-use Charcoal\Object\RoutableInterface;
 
 // From 'charcoal-translator'
-use Charcoal\Translator\TranslatorAwareTrait;
 
 // From 'charcoal-view'
-use Charcoal\View\ViewableInterface;
 
 /**
  * Sitemap builder from object hierarchy
@@ -117,6 +117,7 @@ class Builder
             'locale'              => $this->translator()->getLocale(),
             'l10n'                => true,
             'check_active_routes' => true,
+            'relative_urls'       => true,
             'objects'             => [
                 'label'    => '{{title}}',
                 'url'      => '{{url}}',
@@ -175,6 +176,9 @@ class Builder
             if (!isset($options['check_active_routes'])) {
                 $options['check_active_routes'] = $defaults['check_active_routes'];
             }
+            if (!isset($options['relative_urls'])) {
+                $options['relative_urls'] = $defaults['relative_urls'];
+            }
             $out[] = $this->buildObject($class, $options);
         }
 
@@ -198,11 +202,13 @@ class Builder
             }
         }
 
+        // Loadin the actual objects from the predefined settings
         $factory = $this->modelFactory();
         $obj     = $factory->create($class);
 
         $loader = $this->collectionLoader()->setModel($obj);
 
+        // From the filters
         if (isset($options['filters'])) {
             $filters = $options['filters'];
             if ($parent) {
@@ -211,6 +217,7 @@ class Builder
             $loader->addFilters($filters);
         }
 
+        // From the orders
         if (isset($options['orders'])) {
             $orders = $options['orders'];
             if ($parent) {
@@ -219,6 +226,7 @@ class Builder
             $loader->addOrders($orders);
         }
 
+        // From the category / hierarchichal property
         $category     = ($obj instanceof CategoryInterface);
         $hierarchical = ($obj instanceof HierarchicalInterface);
         if ($hierarchical || $category) {
@@ -229,21 +237,26 @@ class Builder
             }
         }
 
+        // Loading
         $list = $loader->load();
 
+        // Processing the objects and rendering data
         $out      = [];
         $children = isset($options['children']) ? $options['children'] : [];
         $level++;
 
+        // Options
         $l10n              = $options['l10n'];
-        $locale            = $options['locale'];
+        $defaultLocale     = $options['locale'];
         $checkActiveRoutes = $options['check_active_routes'];
+        $relativeUrls      = $options['relative_urls'];
 
-        $availableLocales = $l10n ? $this->translator()->availableLocales() : [$locale];
+        // Locales
+        $availableLocales = $l10n ? $this->translator()->availableLocales() : [$defaultLocale];
 
         foreach ($availableLocales as $locale) {
 
-            $currentLocale = $locale;
+            // Get opposite languages locales
             $oppositeLang  = [];
             foreach ($availableLocales as $l) {
                 if ($l == $locale) {
@@ -252,12 +265,15 @@ class Builder
                 $oppositeLang[] = $l;
             }
 
+            // Set the local to the current locale before looping the list.
             $this->translator()->setLocale($locale);
             foreach ($list as $object) {
+                // When checking active routes, do not display routes that are not active
                 if ($checkActiveRoutes && $object instanceof RoutableInterface && !$object->isActiveRoute()) {
                     continue;
                 }
 
+                // Hierarchical (children, when defined)
                 $cs = [];
                 if (!empty($children)) {
                     foreach ($children as $cname => $opts) {
@@ -266,27 +282,34 @@ class Builder
                     }
                 }
 
+                // Url template, relative or absolute?
+                $urlTemplate = $relativeUrls ? $options['url'] : '{{#withBaseUrl}}' . $options['url'] . '{{/withBaseUrl}}';
+
                 $tmp = [
                     'label'    => trim($this->renderData($object, $options['label'])),
-                    'url'      => trim($this->renderData($object, '{{#withBaseUrl}}' . $options['url'] . '{{/withBaseUrl}}')),
+                    'url'      => trim($this->renderData($object, $urlTemplate)),
                     'children' => $cs,
                     'data'     => $this->renderData($object, $options['data']),
                     'level'    => $level,
                     'lang'     => $locale
                 ];
 
+                // If you need a priority, fix your own rules
                 $priority = '';
                 if (isset($options['priority']) && $options['priority']) {
                     $priority = $this->renderData($object, (string)$options['priority']);
                 }
                 $tmp['priority'] = $priority;
 
+                // If you need a date of last modification, fix your own rules
                 $last = '';
                 if (isset($options['last_modified']) && $options['last_modified']) {
                     $last = $this->renderData($object, $options['last_modified']);
                 }
                 $tmp['last_modified'] = $last;
 
+                // Opposite Languages
+                // Meant to be alternate, thus the lack of data rendering
                 $alternates = [];
                 foreach ($oppositeLang as $ol) {
                     $this->translator()->setLocale($ol);
@@ -302,7 +325,7 @@ class Builder
 
                 $tmp['alternates'] = $alternates;
 
-                $this->translator()->setLocale($currentLocale);
+                $this->translator()->setLocale($locale);
                 $out[] = $tmp;
             }
         }
@@ -310,7 +333,7 @@ class Builder
 
         return $out;
     }
-    
+
     /**
      * Recursive data renderer
      *
