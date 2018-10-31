@@ -226,17 +226,6 @@ class Builder
             $loader->addOrders($orders);
         }
 
-        // From the category / hierarchichal property
-        $category     = ($obj instanceof CategoryInterface);
-        $hierarchical = ($obj instanceof HierarchicalInterface);
-        if ($hierarchical || $category) {
-            if ($parent) {
-                $loader->addFilter('master', $parent->id());
-            } else {
-                $loader->addFilter('master', '', ['operator' => 'IS NULL']);
-            }
-        }
-
         // Loading
         $list = $loader->load();
 
