@@ -77,7 +77,7 @@ properties are renderable by objects. Let's take the example below:
                         "filters": {
                             "active": {
                                 "property": "active",
-                                "val": true
+                                "value": true
                             }
                         },
                         "data": {
@@ -108,10 +108,12 @@ which will be output under the `boilerplate/object/section` on the condition `is
 The builder returns only an array. You need to make your own conversation if you need
 another format.
 
-Include the service provider:
+The Sitemap module will include all necessary service providers and set the route (sitemap.xml) directly. Include the module:
 
 ```json
-"charcoal/sitemap/service-provider/sitemap": {}
+"modules": {
+    "charcoal/sitemap/sitemap": {}
+}
 ```
 
 Given the settings above:
@@ -133,28 +135,16 @@ to use it with minimal code in every necessary class.
 | `relative_urls`       | true/false            | false             | Returns either the absolute URL or the relative URL
 | `locale`              | string                | Current locale    | You can choose the locale for the sitemap. (Unless l10n)
 | `objects`             | object class string   | n/a               | The objects and their configurations  
-| `objects`             |-                      |-                  |-   
-| `filters`             | Array                 | n/a               | Filters for the list  
-| `orders`              | Array                 | n/a               | Orders for the list  
-| `children`            | Array                 | n/a               | Uses the same options as `objects`
-| `url`                 | string                | {{url}}           | Renderable URL, in case the method is not `url`
-| `label`               | string                | {{title}}         | Renderable label, in case it's not `title`  
-| `data`                | Array                 | n/a               | Any order data you want in. This is recursively rendered on the object  
+| - `filters`             | Array                 | n/a               | Filters for the list  
+| - `orders`              | Array                 | n/a               | Orders for the list  
+| - `children`            | Array                 | n/a               | Uses the same options as `objects`
+| - `url`                 | string                | {{url}}           | Renderable URL, in case the method is not `url`
+| - `label`               | string                | {{title}}         | Renderable label, in case it's not `title`  
+| - `data`                | Array                 | n/a               | Any order data you want in. This is recursively rendered on the object  
 
 ### Sitemap.xml
 This contrib provides a route for `sitemap.xml` that dynamically loads the `xml` config and outputs it 
 as an XML for crawlers to read.
-
-```php
-// Config.php
-// [...]
-
-// Import routes
-$this->addFile(__DIR__ . '/routes.json');
-$this->addFile(__DIR__.'/../vendor/locomotivemtl/charcoal-contrib-sitemap/config/routes.json');
-
-// [...]
-```
 
 ## Development
 
