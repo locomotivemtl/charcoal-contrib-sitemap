@@ -22,6 +22,10 @@ class SitemapServiceProvider implements ServiceProviderInterface
      */
     public function register(Container $container)
     {
+        /**
+         * @param Container $container
+         * @return Builder
+         */
         $container['charcoal/sitemap/builder'] = function (Container $container) {
             $builder = new Builder([
                 'base-url'                => $container['base-url'],
@@ -36,5 +40,6 @@ class SitemapServiceProvider implements ServiceProviderInterface
 
             return $builder;
         };
+
     }
 }

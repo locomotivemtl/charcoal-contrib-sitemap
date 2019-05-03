@@ -4,23 +4,12 @@ namespace Charcoal\Sitemap\Service;
 
 use Charcoal\Factory\FactoryInterface;
 use Charcoal\Loader\CollectionLoader;
-use Charcoal\Object\CategoryInterface;
-use Charcoal\Object\HierarchicalInterface;
 use Charcoal\Object\RoutableInterface;
 use Charcoal\Translator\TranslatorAwareTrait;
 use Charcoal\View\ViewableInterface;
 use InvalidArgumentException;
 use RuntimeException;
-
-// From 'charcoal-factory'
-
-// From 'charcoal-core'
-
-// From 'charcoal-object'
-
-// From 'charcoal-translator'
-
-// From 'charcoal-view'
+use Slim\Http\Uri;
 
 /**
  * Sitemap builder from object hierarchy
@@ -34,6 +23,7 @@ use RuntimeException;
 class Builder
 {
     use TranslatorAwareTrait;
+
 
     /**
      * @var string
@@ -246,7 +236,7 @@ class Builder
         foreach ($availableLocales as $locale) {
 
             // Get opposite languages locales
-            $oppositeLang  = [];
+            $oppositeLang = [];
             foreach ($availableLocales as $l) {
                 if ($l == $locale) {
                     continue;
@@ -271,12 +261,12 @@ class Builder
                     }
                 }
 
-                // Url template, relative or absolute?
-                $urlTemplate = $relativeUrls ? $options['url'] : '{{#withBaseUrl}}' . $options['url'] . '{{/withBaseUrl}}';
-
+                $url = $relativeUrls ?
+                    trim($this->renderData($object, $options['url'])) :
+                    $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
                 $tmp = [
                     'label'    => trim($this->renderData($object, $options['label'])),
-                    'url'      => trim($this->renderData($object, $urlTemplate)),
+                    'url'      => $url,
                     'children' => $cs,
                     'data'     => $this->renderData($object, $options['data']),
                     'level'    => $level,
@@ -306,8 +296,13 @@ class Builder
                     if ($checkActiveRoutes && $object instanceof RoutableInterface && !$object->isActiveRoute()) {
                         continue;
                     }
+
+                    $url = $relativeUrls ?
+                        trim($this->renderData($object, $options['url'])) :
+                        $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
+
                     $alternates[] = [
-                        'url'  => trim($this->renderData($object, '{{#withBaseUrl}}' . $options['url'] . '{{/withBaseUrl}}')),
+                        'url'  => $url,
                         'lang' => $ol
                     ];
                 }
@@ -437,10 +432,37 @@ class Builder
      * @param string $baseUrl URL
      * @return self
      */
-    protected function setBaseUrl($baseUrl)
+    public function setBaseUrl($baseUrl)
     {
+        $baseUrl       = Uri::createFromString($baseUrl);
         $this->baseUrl = $baseUrl;
         return $this;
+    }
+
+    /**
+     * @param $uri
+     * @return string
+     */
+    protected function withBaseUrl($uri)
+    {
+        $uri = strval($uri);
+        if ($uri) {
+            $parts = parse_url($uri);
+            if (!isset($parts['scheme'])) {
+                if (!in_array($uri[0], ['/', '#', '?'])) {
+                    $path  = isset($parts['path']) ? $parts['path'] : '';
+                    $query = isset($parts['query']) ? $parts['query'] : '';
+                    $hash  = isset($parts['fragment']) ? $parts['fragment'] : '';
+
+                    $uri = $this->baseUrl()
+                        ->withPath($path)
+                        ->withQuery($query)
+                        ->withFragment($hash);
+                }
+            }
+        }
+
+        return $uri;
     }
 
 }
