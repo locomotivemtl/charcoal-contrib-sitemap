@@ -46,8 +46,7 @@
         ],
         "tests": [
             "@phplint",
-            "@phpcs",
-            "@phpunit"
+            "@phpcs"
         ],
         "phplint": "find {src,tests} -name '*.php' -print0 | xargs -0 -n1 -P8 php -l | grep -v '^No syntax errors detected'; test $? -eq 1",
         "phpcs": "php vendor/bin/phpcs -ps --colors src/ tests/",
