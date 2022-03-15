@@ -198,13 +198,13 @@ Charcoal is licensed under the MIT license. See [LICENSE](LICENSE) for details.
 
 [dev-scrutinizer]:    https://scrutinizer-ci.com/g/locomotivemtl/charcoal-contrib-sitemap/
 [dev-coveralls]:      https://coveralls.io/r/locomotivemtl/charcoal-contrib-sitemap
-[dev-travis]:         https://travis-ci.org/locomotivemtl/charcoal-contrib-sitemap
+[dev-travis]:         https://app.travis-ci.com/github/locomotivemtl/charcoal-contrib-sitemap
 
 [badge-license]:      https://img.shields.io/packagist/l/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
 [badge-version]:      https://img.shields.io/packagist/v/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
 [badge-scrutinizer]:  https://img.shields.io/scrutinizer/g/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
 [badge-coveralls]:    https://img.shields.io/coveralls/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
-[badge-travis]:       https://img.shields.io/travis/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
+[badge-travis]:       https://img.shields.io/travis/com/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
 
 [psr-1]:  https://www.php-fig.org/psr/psr-1/
 [psr-2]:  https://www.php-fig.org/psr/psr-2/
