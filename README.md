@@ -38,15 +38,19 @@ The preferred (and only supported) method is with Composer:
 $ composer require locomotivemtl/charcoal-contrib-sitemap
 ```
 
+
+
 ### Dependencies
-- [Charcoal-factory][charcoal-app] ~0.8
-- [Charcoal-factory][charcoal-factory] ~0.4
-- [Charcoal-object][charcoal-object] ~0.4
-- [Charcoal-translator][charcoal-translator] ~0.3
 
 #### Required
 
--   [**PHP 5.6+**](https://php.net): _PHP 7_ is recommended.
+-   **[PHP 5.6+](https://php.net)**: _PHP 7_ is recommended.
+-   **[locomotivemtl/charcoal-app][charcoal-app]**: ^0.8
+-   **[locomotivemtl/charcoal-core][charcoal-core]**: ^0.3
+-   **[locomotivemtl/charcoal-factory][charcoal-factory]**: ^0.4
+-   **[locomotivemtl/charcoal-object][charcoal-object]**: ^0.4
+-   **[locomotivemtl/charcoal-translator][charcoal-translator]**: ^0.3
+
 
 
 ## Service Provider
@@ -189,12 +193,13 @@ The charcoal-contrib-sitemap module follows the Charcoal coding-style:
 Charcoal is licensed under the MIT license. See [LICENSE](LICENSE) for details.
 
 
+
 [charcoal-contrib-sitemap]:  https://packagist.org/packages/locomotivemtl/charcoal-contrib-sitemap
 [charcoal-app]:              https://packagist.org/packages/locomotivemtl/charcoal-app
+[charcoal-core]:             https://packagist.org/packages/locomotivemtl/charcoal-core
 [charcoal-factory]:          https://packagist.org/packages/locomotivemtl/charcoal-factory
 [charcoal-object]:           https://packagist.org/packages/locomotivemtl/charcoal-object
 [charcoal-translator]:       https://packagist.org/packages/locomotivemtl/charcoal-translator
-[charcoal-view]:             https://packagist.org/packages/locomotivemtl/charcoal-view
 
 [dev-scrutinizer]:    https://scrutinizer-ci.com/g/locomotivemtl/charcoal-contrib-sitemap/
 [dev-coveralls]:      https://coveralls.io/r/locomotivemtl/charcoal-contrib-sitemap
