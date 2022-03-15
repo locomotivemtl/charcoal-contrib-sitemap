@@ -20,10 +20,10 @@ trait SitemapBuilderAwareTrait
     }
 
     /**
-     * @param Builder $sitemapBuilder
-     * @return SitemapBuilderAwareTrait
+     * @param  Builder $sitemapBuilder
+     * @return self
      */
-    public function setSitemapBuilder($sitemapBuilder)
+    public function setSitemapBuilder(Builder $sitemapBuilder)
     {
         $this->sitemapBuilder = $sitemapBuilder;
         return $this;

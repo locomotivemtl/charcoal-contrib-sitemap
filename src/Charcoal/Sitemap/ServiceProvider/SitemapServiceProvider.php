@@ -2,12 +2,9 @@
 
 namespace Charcoal\Sitemap\ServiceProvider;
 
-// From Pimple
+use Charcoal\Sitemap\Service\Builder;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-
-use Charcoal\Sitemap\Service\Builder;
-
 
 /**
  * The Sitemap Contrib Service Provider.
@@ -23,7 +20,7 @@ class SitemapServiceProvider implements ServiceProviderInterface
     public function register(Container $container)
     {
         /**
-         * @param Container $container
+         * @param  Container $container the service locator.
          * @return Builder
          */
         $container['charcoal/sitemap/builder'] = function (Container $container) {
@@ -31,7 +28,7 @@ class SitemapServiceProvider implements ServiceProviderInterface
                 'base-url'                => $container['base-url'],
                 'model/factory'           => $container['model/factory'],
                 'model/collection/loader' => $container['model/collection/loader'],
-                'translator'              => $container['translator']
+                'translator'              => $container['translator'],
             ]);
 
             $config = $container['config'];
@@ -40,6 +37,5 @@ class SitemapServiceProvider implements ServiceProviderInterface
 
             return $builder;
         };
-
     }
 }

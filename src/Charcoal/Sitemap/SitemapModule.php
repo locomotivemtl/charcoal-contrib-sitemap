@@ -2,7 +2,6 @@
 
 namespace Charcoal\Sitemap;
 
-// from charcoal-app
 use Charcoal\App\Module\AbstractModule;
 use Charcoal\Sitemap\ServiceProvider\SitemapServiceProvider;
 use Psr\Http\Message\RequestInterface;
@@ -16,11 +15,10 @@ class SitemapModule extends AbstractModule
     /**
      * Setup the module's dependencies.
      *
-     * @return AbstractModule
+     * @return self
      */
     public function setup()
     {
-
         $container = $this->app()->getContainer();
 
         $this->setupPublicRoutes();
@@ -31,17 +29,18 @@ class SitemapModule extends AbstractModule
         return $this;
     }
 
-
     /**
+     * Register the 'sitemap.xml' route.
+     *
      * @return void
      */
     private function setupPublicRoutes()
     {
         $config = [
             'route'      => '/sitemap.xml',
+            'methods'    => [ 'GET' ],
             'controller' => 'charcoal/sitemap/action/sitemap',
-            'methods'    => ['GET'],
-            'ident'      => 'charcoal/sitemap/action/sitemap'
+            'ident'      => 'charcoal/sitemap/action/sitemap',
         ];
 
         $container = $this->app()->getContainer();
@@ -49,17 +48,16 @@ class SitemapModule extends AbstractModule
         $this->app()->map($config['methods'], $config['route'], function (
             RequestInterface $request,
             ResponseInterface $response,
-            array $args = []) use ($config, $container) {
+            array $args = []
+        ) use ($config, $container) {
+            $routeControllerClass = $this['route/controller/action/class'];
 
-            $routeController = $this['route/controller/action/class'];
-
-            $route = $container['route/factory']->create($routeController, [
+            $routeController = $container['route/factory']->create($routeControllerClass, [
                 'config' => $config,
-                'logger' => $this['logger']
+                'logger' => $this['logger'],
             ]);
 
-            return $route($this, $request, $response);
+            return $routeController($this, $request, $response);
         });
     }
-
 }

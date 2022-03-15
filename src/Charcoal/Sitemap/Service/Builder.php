@@ -8,6 +8,7 @@ use Charcoal\Object\RoutableInterface;
 use Charcoal\Translator\TranslatorAwareTrait;
 use Charcoal\View\ViewableInterface;
 use InvalidArgumentException;
+use Psr\Http\Message\UriInterface;
 use RuntimeException;
 use Slim\Http\Uri;
 
@@ -24,23 +25,25 @@ class Builder
 {
     use TranslatorAwareTrait;
 
-
     /**
-     * @var string
+     * @var UriInterface
      */
     protected $baseUrl;
+
     /**
      * Store the factory instance.
      *
      * @var FactoryInterface
      */
     protected $modelFactory;
+
     /**
      * Object hierarchy as defined in the config.json
      *
      * @var array
      */
     private $objectHierarchy;
+
     /**
      * Store the factory instance.
      *
@@ -49,12 +52,11 @@ class Builder
     private $collectionLoader;
 
     /**
-     * Class constructor.
+     * Create the Sitemap Builder.
      *
+     * @param  array $data Class dependencies.
      * @throws InvalidArgumentException When no model factory is defined.
      * @throws InvalidArgumentException When no collection loader is defined.
-     * @param array $data Dependencies.
-     * @return self
      */
     public function __construct(array $data)
     {
@@ -84,13 +86,16 @@ class Builder
 
     /**
      * Necessary options.
+     *
      * Most options within the objects range are renderable
      * Options outsite the 'objects' will impact objects and
      * can be overwriten for each.
+     *
+     * ```json
      * {
      *     'l10n': true, // Setting l10n mode
      *     'objects': {
-     *         'boilerplate/object':{
+     *         'boilerplate/object': {
      *             'data': {
      *                 'id': '{{id}}',
      *                 'l10n': false // This object doesn't require l10n in that context
@@ -98,6 +103,7 @@ class Builder
      *         }
      *     }
      * }
+     * ```
      *
      * @return array Renderable options.
      */
@@ -112,8 +118,8 @@ class Builder
                 'label'    => '{{title}}',
                 'url'      => '{{url}}',
                 'children' => [],
-                'data'     => []
-            ]
+                'data'     => [],
+            ],
         ];
     }
 
@@ -155,20 +161,24 @@ class Builder
 
         $objectOptions = $defaults['objects'];
         foreach ($objects as $class => $options) {
-
             $options = array_merge($objectOptions, $options);
+
             if (!isset($options['l10n'])) {
                 $options['l10n'] = $defaults['l10n'];
             }
+
             if (!isset($options['locale'])) {
                 $options['locale'] = $defaults['locale'];
             }
+
             if (!isset($options['check_active_routes'])) {
                 $options['check_active_routes'] = $defaults['check_active_routes'];
             }
+
             if (!isset($options['relative_urls'])) {
                 $options['relative_urls'] = $defaults['relative_urls'];
             }
+
             $out[] = $this->buildObject($class, $options);
         }
 
@@ -181,7 +191,7 @@ class Builder
      * @param  string            $class   Classname.
      * @param  array             $options Associated options.
      * @param  ViewableInterface $parent  Parent object to render on.
-     * @return array                       Local sitemap.
+     * @return array Local sitemap.
      */
     protected function buildObject($class, $options, ViewableInterface $parent = null, $level = 0)
     {
@@ -231,14 +241,16 @@ class Builder
         $relativeUrls      = $options['relative_urls'];
 
         // Locales
-        $availableLocales = $l10n ? $this->translator()->availableLocales() : [$defaultLocale];
+        $availableLocales = $l10n
+            ? $this->translator()->availableLocales()
+            : [ $defaultLocale ];
 
         foreach ($availableLocales as $locale) {
 
             // Get opposite languages locales
             $oppositeLang = [];
             foreach ($availableLocales as $l) {
-                if ($l == $locale) {
+                if ($l === $locale) {
                     continue;
                 }
                 $oppositeLang[] = $l;
@@ -261,16 +273,16 @@ class Builder
                     }
                 }
 
-                $url = $relativeUrls ?
-                    trim($this->renderData($object, $options['url'])) :
-                    $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
+                $url = $relativeUrls
+                    ? trim($this->renderData($object, $options['url']))
+                    : $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
                 $tmp = [
                     'label'    => trim($this->renderData($object, $options['label'])),
                     'url'      => $url,
                     'children' => $cs,
                     'data'     => $this->renderData($object, $options['data']),
                     'level'    => $level,
-                    'lang'     => $locale
+                    'lang'     => $locale,
                 ];
 
                 // If you need a priority, fix your own rules
@@ -297,13 +309,13 @@ class Builder
                         continue;
                     }
 
-                    $url = $relativeUrls ?
-                        trim($this->renderData($object, $options['url'])) :
-                        $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
+                    $url = $relativeUrls
+                        ? trim($this->renderData($object, $options['url']))
+                        : $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
 
                     $alternates[] = [
                         'url'  => $url,
-                        'lang' => $ol
+                        'lang' => $ol,
                     ];
                 }
 
@@ -314,7 +326,6 @@ class Builder
             }
         }
 
-
         return $out;
     }
 
@@ -323,7 +334,7 @@ class Builder
      *
      * @param  ViewableInterface $obj  Object to render on.
      * @param  mixed             $data Pretty much anything to be rendered
-     * @return mixed                   Rendered data.
+     * @return mixed Rendered data.
      */
     protected function renderData(ViewableInterface $obj, $data)
     {
@@ -419,7 +430,9 @@ class Builder
     }
 
     /**
-     * @return string Website Base URL
+     * Get the website's base URL.
+     *
+     * @return UriInterface
      */
     protected function baseUrl()
     {
@@ -427,20 +440,25 @@ class Builder
     }
 
     /**
-     * Website base URL
+     * Set the website's base URL.
      *
-     * @param string $baseUrl URL
+     * @param  UriInterface|string $baseUrl URL
      * @return self
      */
     public function setBaseUrl($baseUrl)
     {
-        $baseUrl       = Uri::createFromString($baseUrl);
+        if (!($baseUrl instanceof UriInterface)) {
+            $baseUrl = Uri::createFromString($baseUrl);
+        }
+
         $this->baseUrl = $baseUrl;
         return $this;
     }
 
     /**
-     * @param $uri
+     * Returns the URI with the base URI prepended, if not absolute.
+     *
+     * @param  $uri The URI to parse.
      * @return string
      */
     protected function withBaseUrl($uri)
@@ -464,5 +482,4 @@ class Builder
 
         return $uri;
     }
-
 }

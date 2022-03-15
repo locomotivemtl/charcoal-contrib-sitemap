@@ -3,7 +3,6 @@
 namespace Charcoal\Sitemap\Action;
 
 use Charcoal\App\Action\AbstractAction;
-use Charcoal\Translator\TranslatorAwareTrait;
 use Pimple\Container;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -15,9 +14,16 @@ use SimpleXMLElement;
 class SitemapAction extends AbstractAction
 {
     /**
-     * @var string
+     * @var \Psr\Http\Message\UriInterface
      */
     protected $baseUrl;
+
+    /**
+     * The sitemap XML as a string.
+     *
+     * @var string|null
+     */
+    protected $sitemapXml;
 
     /**
      * Inject dependencies from a DI Container.
@@ -34,9 +40,7 @@ class SitemapAction extends AbstractAction
     }
 
     /**
-     * Gets a psr7 request and response and returns a response.
-     *
-     * Called from `__invoke()` as the first thing.
+     * Returns an HTTP response with the sitemap XML.
      *
      * @param RequestInterface  $request  A PSR-7 compatible Request instance.
      * @param ResponseInterface $response A PSR-7 compatible Response instance.
@@ -46,75 +50,92 @@ class SitemapAction extends AbstractAction
     {
         $this->setMode(self::MODE_XML);
 
-        $sitemap   = $this->sitemapBuilder->build('xml');
-        $this->xml = $this->toXml($sitemap);
+        $sitemapLinks = $this->sitemapBuilder->build('xml');
+        $this->sitemapXml = $this->toXml($sitemapLinks);
 
         $this->setSuccess(true);
 
         return $response;
     }
 
+    /**
+     * The XML string.
+     *
+     * @return string|null
+     */
+    public function results()
+    {
+        return $this->sitemapXml;
+    }
+
+    /**
+     * Convert the collection of links into an XML document.
+     *
+     * @param  array $map The collection of links.
+     * @return string|null
+     */
     protected function toXml($map)
     {
-        $str = '<?xml version="1.0" encoding="UTF-8"?><urlset '
-              .'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
-              .'xmlns:xhtml="http://www.w3.org/1999/xhtml" '
-              .'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
-              .'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"/>';
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+              .'<urlset'
+              .' xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
+              .' xmlns:xhtml="http://www.w3.org/1999/xhtml"'
+              .' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+              .' xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"'
+              .'/>';
 
-        $xml = new SimpleXmlElement($str);
+        $urlsetEl = new SimpleXmlElement($xml);
 
-        foreach ($map as $m) {
-            foreach ($m as $obj) {
-
-                $currentUrl = ltrim($obj['url'], '/');
-                if (parse_url($currentUrl, PHP_URL_HOST) === null) {
-                    $currentUrl = $this->baseUrl . $currentUrl;
+        foreach ($map as $objs) {
+            foreach ($objs as $obj) {
+                $objUrl = ltrim($obj['url'], '/');
+                if (parse_url($objUrl, PHP_URL_HOST) === null) {
+                    $objUrl = $this->baseUrl.$objUrl;
                 }
 
-                if (parse_url($currentUrl, PHP_URL_HOST) != parse_url($this->baseUrl, PHP_URL_HOST) &&
-                    parse_url($currentUrl, PHP_URL_HOST) !== null) {
+                if (parse_url($objUrl, PHP_URL_HOST) != parse_url($this->baseUrl, PHP_URL_HOST) &&
+                    parse_url($objUrl, PHP_URL_HOST) !== null) {
                     continue;
                 }
 
-                $url = $xml->addChild('url');
-                $url->addChild('loc', $currentUrl);
+                $urlEl = $urlsetEl->addChild('url');
+                $urlEl->addChild('loc', $objUrl);
+
                 if ($obj['last_modified']) {
-                    $url->addChild('lastmod', $obj['last_modified']);
+                    $urlEl->addChild('lastmod', $obj['last_modified']);
                 }
 
                 if ($obj['priority']) {
-                    $url->addChild('priority', $obj['priority']);
+                    $urlEl->addChild('priority', $obj['priority']);
                 }
 
                 if ($obj['alternates']) {
                     foreach ($obj['alternates'] as $alt) {
-
                         $altUrl = ltrim($alt['url'], '/');
                         if (parse_url($altUrl, PHP_URL_HOST) === null) {
-                            $altUrl = $this->baseUrl . $altUrl;
+                            $altUrl = $this->baseUrl.$altUrl;
                         }
 
                         if (parse_url($altUrl, PHP_URL_HOST) != parse_url($this->baseUrl, PHP_URL_HOST) &&
                             parse_url($altUrl, PHP_URL_HOST) !== null) {
                             continue;
                         }
-                        $xhtml = $url->addChild('xhtml:link', null, 'xhtml');
-                        $xhtml->addAttribute('rel', 'alternate');
-                        $xhtml->addAttribute('hreflang', $alt['lang']);
-                        $xhtml->addAttribute('href', $altUrl);
-                        unset($xhtml);
+
+                        $linkEl = $urlEl->addChild('xhtml:link', null, 'xhtml');
+                        $linkEl->addAttribute('rel', 'alternate');
+                        $linkEl->addAttribute('hreflang', $alt['lang']);
+                        $linkEl->addAttribute('href', $altUrl);
                     }
                 }
             }
         }
 
-        return $xml->asXml();
-    }
+        $xml = $urlsetEl->asXml();
 
-    public function results()
-    {
-        return $this->xml;
-    }
+        if (is_string($xml)) {
+            return $xml;
+        }
 
+        return null;
+    }
 }
