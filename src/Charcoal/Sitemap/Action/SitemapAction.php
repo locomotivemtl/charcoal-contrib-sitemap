@@ -105,8 +105,7 @@ class SitemapAction extends AbstractAction
                     $objUrl = $this->baseUrl.$objUrl;
                 }
 
-                if (parse_url($objUrl, PHP_URL_HOST) != parse_url($this->baseUrl, PHP_URL_HOST) &&
-                    parse_url($objUrl, PHP_URL_HOST) !== null) {
+                if ($this->isValidUriHost($objUrl)) {
                     continue;
                 }
 
@@ -128,8 +127,7 @@ class SitemapAction extends AbstractAction
                             $altUrl = $this->baseUrl.$altUrl;
                         }
 
-                        if (parse_url($altUrl, PHP_URL_HOST) != parse_url($this->baseUrl, PHP_URL_HOST) &&
-                            parse_url($altUrl, PHP_URL_HOST) !== null) {
+                        if ($this->isValidUriHost($altUrl)) {
                             continue;
                         }
 
@@ -149,5 +147,20 @@ class SitemapAction extends AbstractAction
         }
 
         return null;
+    }
+
+    /**
+     * Determines if a host is defined and matches the host of
+     * the application's base URI.
+     *
+     * @param  string $uri The URI to test.
+     * @return boolean
+     */
+    protected function isValidUriHost($uri)
+    {
+        $a = parse_url($uri, PHP_URL_HOST);
+        $b = parse_url($this->baseUrl, PHP_URL_HOST);
+
+        return ($a != $b && $a !== null);
     }
 }
