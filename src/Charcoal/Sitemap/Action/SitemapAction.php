@@ -76,12 +76,24 @@ class SitemapAction extends AbstractAction
      */
     protected function toXml($map)
     {
+        $xmlNs = [
+            'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
+            'xhtml' => 'http://www.w3.org/1999/xhtml',
+            'xsi'   => 'http://www.w3.org/2001/XMLSchema-instance',
+        ];
+
+        $xsiNs = [
+            'schemaLocation' => 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd',
+        ];
+
+        $xhtmlNs = 'http://www.w3.org/1999/xhtml';
+
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'
               .'<urlset'
-              .' xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'
-              .' xmlns:xhtml="http://www.w3.org/1999/xhtml"'
-              .' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
-              .' xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"'
+              .' xmlns="'.$xmlNs['xmlns'].'"'
+              .' xmlns:xhtml="'.$xmlNs['xhtml'].'"'
+              .' xmlns:xsi="'.$xmlNs['xsi'].'"'
+              .' xsi:schemaLocation="'.$xsiNs['schemaLocation'].'"'
               .'/>';
 
         $urlsetEl = new SimpleXmlElement($xml);
@@ -121,7 +133,7 @@ class SitemapAction extends AbstractAction
                             continue;
                         }
 
-                        $linkEl = $urlEl->addChild('xhtml:link', null, 'xhtml');
+                        $linkEl = $urlEl->addChild('xhtml:link', null, $xmlNs['xhtml']);
                         $linkEl->addAttribute('rel', 'alternate');
                         $linkEl->addAttribute('hreflang', $alt['lang']);
                         $linkEl->addAttribute('href', $altUrl);
