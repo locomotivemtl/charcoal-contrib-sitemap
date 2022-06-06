@@ -1,7 +1,7 @@
 {
     "type": "library",
     "name": "locomotivemtl/charcoal-contrib-sitemap",
-    "description": "Charcoal service provider to help deal with sitemaps.",
+    "description": "Charcoal service for generating a sitemap.",
     "keywords": [
         "charcoal"
     ],

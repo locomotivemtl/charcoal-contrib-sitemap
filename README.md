@@ -7,7 +7,7 @@ Charcoal Sitemap
 [![Coverage Status][badge-coveralls]][dev-coveralls]
 [![Build Status][badge-travis]][dev-travis]
 
-A [Charcoal][charcoal-app] set of tools to deal with sitemap.
+A [Charcoal][charcoal-app] service for generating a sitemap.
 
 
 
@@ -16,7 +16,6 @@ A [Charcoal][charcoal-app] set of tools to deal with sitemap.
 -   [Installation](#installation)
     -   [Dependencies](#dependencies)
 -   [Service Provider](#service-provider)
-    -   [Parameters](#parameters)
     -   [Services](#services)
 -   [Configuration](#configuration)
 -   [Usage](#usage)
@@ -55,55 +54,188 @@ $ composer require locomotivemtl/charcoal-contrib-sitemap
 
 ## Service Provider
 
-The following services are provided with the use of [charcoal-contrib-sitemap][charcoal-contrib-sitemap]
-
 ### Services
 
-- **charcoal/sitemap/builder** instance of `Sitemap\Builder`
+- **charcoal/sitemap/builder** Instance of `Charcoal\Sitemap\Service\Builder`.
+  Used to generate collections of links from the configured models.
+
+
 
 ## Configuration
 
-Configuration are set in the config file of the project under the `sitemap` key.
-You can setup objects to be displayed in multiple languages (l10n) or not. Most
-properties are renderable by objects. Let's take the example below:
+The Sitemap can be configured from the application configset under the
+`sitemap` key. You can setup which objects to be included and available
+translations (l10n).
 
-```json
-    {
-        "sitemap": {
-            "footer_sitemap": {
-                "l10n": true,
-                "check_active_routes": true,
-                "relative_urls": false,
-                "objects": {
-                    "boilerplate/object/section": {
-                        "label": "{{title}}",
-                        "url": "{{url}}",
-                        "filters": {
-                            "active": {
-                                "property": "active",
-                                "value": true
-                            }
-                        },
-                        "data": {
-                            "id": "{{id}}",
-                            "metaTitle": "{{metaTitle}}"
-                        },
-                        "children": {
-                            "boilerplate/object/section-children": {
-                                "condition": "{{isAnObjectParent}}"
-                            }
+Most options are renderable by objects using your application's chosen
+template syntax (Mustache used in examples below).
+
+### Default Options
+
+```jsonc
+{
+    /**
+     * The service's configuration point.
+     */
+    "sitemap": {
+        /**
+         * One or more groups to customize how objects should be processed.
+         *
+         * The array key is an arbitrary identifier for the grouping of models.
+         */
+        "<group-name>": {
+            /**
+             * Whether or not to include links to translations.
+             *
+             * - `true` — Multilingual. Include all translations
+             *   (see `locales.languages`).
+             * - `false` — Unilingual. Include only the default language
+             *   (see `locales.default_language`).
+             */
+            "l10n": false,
+            /**
+             * The language to include a link to if group is unilingual.
+             *
+             * If `l10n` is `true`, this option is ignored.
+             *
+             * Defaults to the application's current language.
+             */
+            "locale": "<current-language>",
+            /**
+             * Whether or not to check if the routable object
+             * has an active route (`RoutableInterface#isActiveRoute()`)
+             *
+             * - `true` — Include only routable objects with active routes.
+             * - `false` — Ignore if a routable object's route is active.
+             */
+            "check_active_routes": false,
+            /**
+             * Whether or not to prepend relative URIs with
+             * the application's base URI (see `base_url`).
+             *
+             * - `true` — Use only the object's URI (see `sitemap.*.objects.*.url`).
+             * - `false` — Prepend the base URI if object's URI is relative.
+             */
+            "relative_urls": false,
+            /**
+             * Map of models to include in the sitemap.
+             */
+            "objects": {
+                /**
+                 * One or more models to customize and include in the sitemap.
+                 *
+                 * The array key must be the model's object type,
+                 * like `app/model/foo-bar`, or fully-qualified name (FQN),
+                 * like `App\Model\FooBar`.
+                 */
+                "<object-type>": {
+                    /**
+                     * The URI of the object for the `<loc>` element.
+                     */
+                    "url": "{{ url }}",
+                    /**
+                     * The name of the object. Can be used in a
+                     * custom sitemap builder or XML generator.
+                     */
+                    "label": "{{ title }}",
+                    /**
+                     * Map of arbitrary object data that can be used
+                     * in a custom sitemap builder or XML generator.
+                     */
+                    "data": {},
+                    /**
+                     * List or map of collection filters of which objects
+                     * to include in the sitemap.
+                     *
+                     * ```json
+                     * "<filter-name>": {
+                     *     "property": "active",
+                     *     "value": true
+                     * }
+                     * ```
+                     */
+                    "filters": [],
+                    /**
+                     * List or map of collection orders to sort the objects
+                     * in the sitemap.
+                     *
+                     * ```json
+                     * "<order-name>": {
+                     *     "property": "position",
+                     *     "direction": "ASC"
+                     * }
+                     * ```
+                     */
+                    "orders": [],
+                    /**
+                     * Map of models to include in the sitemap
+                     * below this model.
+                     *
+                     * Practical to group related models.
+                     */
+                    "children": {
+                        /**
+                         * One or more models to customize and include in the sitemap.
+                         */
+                        "<object-type>": {
+                            /**
+                             * A constraint on the parent object to determine
+                             * if the child model's objects should be included
+                             * in the sitemap.
+                             */
+                            "condition": null
                         }
                     }
                 }
             }
         }
     }
+}
 ```
-The `footer_sitemap` sitemap is defined to be `l10n` (will output all languages as alternates) and defines
-the `boilerplate/object/section` object to create the list. Note that is the object is of RoutableInterface,
-it will automatically test the `isActiveRoute` condition. You can disable the option by setting `check_active_routes`
-to `false` on the list. The section object has `children`, in that case `boilerplate/object/section-children`, 
-which will be output under the `boilerplate/object/section` on the condition `isAnObjectParent` called on the parent.
+
+Each model can override the following options of their group:
+`l10n`, `locale`, `check_active_routes`, `relative_urls`.
+
+
+### Example
+
+The example below, identified as `footer_sitemap`, is marked as multilingual
+using the `l10n` option which will include all translations.
+
+```json
+{
+    "sitemap": {
+        "footer_sitemap": {
+            "l10n": true,
+            "check_active_routes": true,
+            "relative_urls": false,
+            "objects": {
+                "app/object/section": {
+                    "label": "{{ title }}",
+                    "url": "{{ url }}",
+                    "filters": {
+                        "active": {
+                            "property": "active",
+                            "value": true
+                        }
+                    },
+                    "data": {
+                        "id": "{{ id }}",
+                        "metaTitle": "{{ metaTitle }}"
+                    },
+                    "children": {
+                        "app/object/section-children": {
+                            "condition": "{{ isAnObjectParent }}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+
 
 ## Usage
 
@@ -130,25 +262,13 @@ You can also use the `SitemapBuilderAwareTrait`, which includes the setter and g
 to use it with minimal code in every necessary class.
 
 
-### Options
-
-| Key                   | Values                | Default           | Description 
-|:---                   |:---:                  |:---:              |---          
-|`l10n`                 | true/false            | false             | Defines if the sitemap includes all the languages defined in the configurations  
-| `check_active_routes` | true/false            | false             | Checks on every object if the route is active (using isActiveRoute)
-| `relative_urls`       | true/false            | false             | Returns either the absolute URL or the relative URL
-| `locale`              | string                | Current locale    | You can choose the locale for the sitemap. (Unless l10n)
-| `objects`             | object class string   | n/a               | The objects and their configurations  
-| - `filters`             | Array                 | n/a               | Filters for the list  
-| - `orders`              | Array                 | n/a               | Orders for the list  
-| - `children`            | Array                 | n/a               | Uses the same options as `objects`
-| - `url`                 | string                | {{url}}           | Renderable URL, in case the method is not `url`
-| - `label`               | string                | {{title}}         | Renderable label, in case it's not `title`  
-| - `data`                | Array                 | n/a               | Any order data you want in. This is recursively rendered on the object  
 
 ### Sitemap.xml
+
 This contrib provides a route for `sitemap.xml` that dynamically loads the `xml` config and outputs it 
 as an XML for crawlers to read.
+
+
 
 ## Development
 
@@ -164,11 +284,22 @@ To run the scripts (phplint, phpcs, and phpunit):
 $ composer test
 ```
 
+
+
+### API Documentation
+
+-   The auto-generated `phpDocumentor` API documentation is available at:  
+    [https://locomotivemtl.github.io/charcoal-contrib-sitemap/docs/master/](https://locomotivemtl.github.io/charcoal-contrib-sitemap/docs/master/)
+-   The auto-generated `apigen` API documentation is available at:  
+    [https://codedoc.pub/locomotivemtl/charcoal-contrib-sitemap/master/](https://codedoc.pub/locomotivemtl/charcoal-contrib-sitemap/master/index.html)
+
+
+
 ### Development Dependencies
 
--   [php-coveralls/php-coveralls][phpcov]
--   [phpunit/phpunit][phpunit]
--   [squizlabs/php_codesniffer][phpcs]
+-   [php-coveralls/php-coveralls](https://packagist.org/packages/php-coveralls/php-coveralls)
+-   [phpunit/phpunit](https://packagist.org/packages/phpunit/phpunit)
+-   [squizlabs/php_codesniffer](https://packagist.org/packages/squizlabs/php_codesniffer)
 
 
 
@@ -184,9 +315,13 @@ The charcoal-contrib-sitemap module follows the Charcoal coding-style:
 
 > Coding style validation / enforcement can be performed with `composer phpcs`. An auto-fixer is also available with `composer phpcbf`.
 
+
+
 ## Credits
 
 -   [Locomotive](https://locomotive.ca/)
+
+
 
 ## License
 
