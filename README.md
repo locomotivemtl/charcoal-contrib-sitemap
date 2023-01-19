@@ -118,6 +118,12 @@ template syntax (Mustache used in examples below).
              */
             "relative_urls": false,
             /**
+             * The transformer to parse each model included in `objects`.
+             *
+             * Either a PHP FQCN or snake-case equivalent.
+             */
+            "transformer": "<class-string>",
+            /**
              * Map of models to include in the sitemap.
              */
             "objects": {
@@ -129,6 +135,12 @@ template syntax (Mustache used in examples below).
                  * like `App\Model\FooBar`.
                  */
                 "<object-type>": {
+                    /**
+                     * The transformer to parse the object.
+                     *
+                     * Either a PHP FQCN or snake-case equivalent.
+                     */
+                    "transformer": "<class-string>",
                     /**
                      * The URI of the object for the `<loc>` element.
                      */
@@ -209,8 +221,10 @@ using the `l10n` option which will include all translations.
             "l10n": true,
             "check_active_routes": true,
             "relative_urls": false,
+            "transformer": "charcoal/sitemap/transformer/routable",
             "objects": {
                 "app/object/section": {
+                    "transformer": "\\App\\Transformer\\Sitemap\\Section",
                     "label": "{{ title }}",
                     "url": "{{ url }}",
                     "filters": {
