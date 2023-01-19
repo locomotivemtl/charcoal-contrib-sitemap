@@ -52,6 +52,11 @@ class Builder
     private $collectionLoader;
 
     /**
+     * @var SitemapPresenter
+     */
+    private $sitemapPresenter;
+
+    /**
      * Create the Sitemap Builder.
      *
      * @param  array $data Class dependencies.
@@ -80,6 +85,7 @@ class Builder
         $this->setModelFactory($data['model/factory']);
         $this->setCollectionLoader($data['model/collection/loader']);
         $this->setTranslator($data['translator']);
+        $this->setSitemapPresenter($data['sitemap/presenter']);
 
         return $this;
     }
@@ -114,12 +120,13 @@ class Builder
             'l10n'                => true,
             'check_active_routes' => true,
             'relative_urls'       => true,
+            'transformer'         => null,
             'objects'             => [
                 'label'    => '{{title}}',
                 'url'      => '{{url}}',
                 'children' => [],
                 'data'     => [],
-            ],
+            ]
         ];
     }
 
@@ -179,6 +186,10 @@ class Builder
                 $options['relative_urls'] = $defaults['relative_urls'];
             }
 
+            if (!isset($options['transformer'])) {
+                $options['transformer'] = $defaults['transformer'];
+            }
+
             $out[] = $this->buildObject($class, $options);
         }
 
@@ -212,7 +223,7 @@ class Builder
         if (isset($options['filters'])) {
             $filters = $options['filters'];
             if ($parent) {
-                $filters = $this->renderData($parent, $filters);
+                $filters = $this->renderData($parent, $filters, $options['transformer']);
             }
             $loader->addFilters($filters);
         }
@@ -221,7 +232,7 @@ class Builder
         if (isset($options['orders'])) {
             $orders = $options['orders'];
             if ($parent) {
-                $orders = $this->renderData($parent, $orders);
+                $orders = $this->renderData($parent, $orders, $options['transformer']);
             }
             $loader->addOrders($orders);
         }
@@ -239,6 +250,7 @@ class Builder
         $defaultLocale     = $options['locale'];
         $checkActiveRoutes = $options['check_active_routes'];
         $relativeUrls      = $options['relative_urls'];
+        $transformer       = $options['transformer'];
 
         // Locales
         $availableLocales = $l10n
@@ -264,23 +276,25 @@ class Builder
                     continue;
                 }
 
+                $presentedParent = $this->sitemapPresenter()->transform($object, $transformer);
+
                 // Hierarchical (children, when defined)
                 $cs = [];
                 if (!empty($children)) {
                     foreach ($children as $cname => $opts) {
                         $opts = array_merge($this->defaultOptions(), $opts);
-                        $cs[] = $this->buildObject($cname, $opts, $object, $level);
+                        $cs[] = $this->buildObject($cname, $opts, $presentedParent, $level);
                     }
                 }
 
                 $url = $relativeUrls
-                    ? trim($this->renderData($object, $options['url']))
-                    : $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
+                    ? trim($this->renderData($object, $options['url'], $transformer))
+                    : $this->withBaseUrl(trim($this->renderData($object, $options['url'], $transformer)));
                 $tmp = [
-                    'label'    => trim($this->renderData($object, $options['label'])),
+                    'label'    => trim($this->renderData($object, $options['label'], $transformer)),
                     'url'      => $url,
                     'children' => $cs,
-                    'data'     => $this->renderData($object, $options['data']),
+                    'data'     => $this->renderData($object, $options['data'], $transformer),
                     'level'    => $level,
                     'lang'     => $locale,
                 ];
@@ -288,14 +302,14 @@ class Builder
                 // If you need a priority, fix your own rules
                 $priority = '';
                 if (isset($options['priority']) && $options['priority']) {
-                    $priority = $this->renderData($object, (string)$options['priority']);
+                    $priority = $this->renderData($object, (string)$options['priority'], $transformer);
                 }
                 $tmp['priority'] = $priority;
 
                 // If you need a date of last modification, fix your own rules
                 $last = '';
                 if (isset($options['last_modified']) && $options['last_modified']) {
-                    $last = $this->renderData($object, $options['last_modified']);
+                    $last = $this->renderData($object, $options['last_modified'], $transformer);
                 }
                 $tmp['last_modified'] = $last;
 
@@ -310,8 +324,8 @@ class Builder
                     }
 
                     $url = $relativeUrls
-                        ? trim($this->renderData($object, $options['url']))
-                        : $this->withBaseUrl(trim($this->renderData($object, $options['url'])));
+                        ? trim($this->renderData($object, $options['url'], $transformer))
+                        : $this->withBaseUrl(trim($this->renderData($object, $options['url'], $transformer)));
 
                     $alternates[] = [
                         'url'  => $url,
@@ -336,10 +350,11 @@ class Builder
      * @param  mixed             $data Pretty much anything to be rendered
      * @return mixed Rendered data.
      */
-    protected function renderData(ViewableInterface $obj, $data)
+    protected function renderData(ViewableInterface $obj, $data, $transformer = null)
     {
         if (is_scalar($data)) {
-            return $obj->view()->render($data, $obj);
+            $presentedObject = $this->sitemapPresenter()->transform($obj, $transformer);
+            return $obj->view()->render($data, $presentedObject);
         }
 
         if (is_array($data)) {
@@ -427,6 +442,24 @@ class Builder
     protected function setCollectionLoader(CollectionLoader $loader)
     {
         $this->collectionLoader = $loader;
+    }
+
+    /**
+     * @return SitemapPresenter
+     */
+    public function sitemapPresenter()
+    {
+        return $this->sitemapPresenter;
+    }
+
+    /**
+     * @param SitemapPresenter $sitemapPresenter
+     * @return Builder
+     */
+    public function setSitemapPresenter(SitemapPresenter $sitemapPresenter)
+    {
+        $this->sitemapPresenter = $sitemapPresenter;
+        return $this;
     }
 
     /**

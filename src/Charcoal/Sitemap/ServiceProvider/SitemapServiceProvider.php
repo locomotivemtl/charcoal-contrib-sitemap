@@ -2,7 +2,9 @@
 
 namespace Charcoal\Sitemap\ServiceProvider;
 
+use Charcoal\Factory\GenericFactory;
 use Charcoal\Sitemap\Service\Builder;
+use Charcoal\Sitemap\Service\SitemapPresenter;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 
@@ -29,6 +31,7 @@ class SitemapServiceProvider implements ServiceProviderInterface
                 'model/factory'           => $container['model/factory'],
                 'model/collection/loader' => $container['model/collection/loader'],
                 'translator'              => $container['translator'],
+                'sitemap/presenter'       => $container['sitemap/presenter']
             ]);
 
             $config = $container['config'];
@@ -36,6 +39,49 @@ class SitemapServiceProvider implements ServiceProviderInterface
             $builder->setObjectHierarchy($config->get('sitemap'));
 
             return $builder;
+        };
+
+
+
+        /**
+         * @param Container $container
+         * @return GenericPresenter
+         */
+        $container['sitemap/presenter'] = function (Container $container) {
+            $transformerFactory = isset($container['transformer/factory']) ?
+                $container['transformer/factory'] :
+                $container['sitemap/transformer/factory'];
+
+            return new SitemapPresenter(
+                $transformerFactory,
+                $container['cache/facade']
+            );
+        };
+        /**
+         * Generic transformer factory.
+         * For a class name app/model/class, it will resolve to App/Transformer/Object/ClassTransformer
+         *
+         * @param Container $container
+         * @return GenericFactory
+         */
+        $container['sitemap/transformer/factory'] = function (Container $container) {
+            return new GenericFactory([
+                'arguments'        => [
+                    'container' => $container,
+                    'logger'    => $container['logger']
+                ],
+                'resolver_options' => [
+                    'suffix'       => 'Transformer',
+                    'replacements' => [
+                        'App/'  => 'App/Transformer/Sitemap/',
+                        'app/'  => 'app/transformer/sitemap/',
+                        'App\\' => 'App\\Transformer\\Sitemap\\',
+                        '-'         => '',
+                        '/'         => '\\',
+                        '.'         => '_'
+                    ],
+                ],
+            ]);
         };
     }
 }
