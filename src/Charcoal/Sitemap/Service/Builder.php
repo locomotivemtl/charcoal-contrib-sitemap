@@ -360,7 +360,7 @@ class Builder
         if (is_array($data)) {
             $out = [];
             foreach ($data as $key => $content) {
-                $out[$key] = $this->renderData($obj, $content);
+                $out[$key] = $this->renderData($obj, $content, $transformer);
             }
             return $out;
         }

@@ -5,6 +5,7 @@ namespace Charcoal\Sitemap\Service;
 use ArrayAccess;
 use Charcoal\Cache\Facade\CachePoolFacade;
 use Charcoal\Factory\FactoryInterface;
+use Charcoal\Translator\TranslatorAwareTrait;
 use InvalidArgumentException;
 use Traversable;
 
@@ -20,6 +21,8 @@ use Traversable;
  */
 class SitemapPresenter
 {
+    use TranslatorAwareTrait;
+
     /**
      * @var FactoryInterface $transformer
      */
@@ -40,10 +43,11 @@ class SitemapPresenter
      * @param string                     $getterPattern The string pattern to match string with. Must have a single
      *                                                  catch-block.
      */
-    public function __construct($transformerFactory, $cacheFacade, $getterPattern = '~{{(\w*?)}}~')
+    public function __construct($transformerFactory, $cacheFacade, $translator, $getterPattern = '~{{(\w*?)}}~')
     {
         $this->setCacheFacade($cacheFacade);
         $this->setTransformerFactory($transformerFactory);
+        $this->setTranslator($translator);
         $this->getterPattern = $getterPattern;
     }
 
@@ -59,10 +63,11 @@ class SitemapPresenter
         }
 
         $key = sprintf(
-            '%s_%s_%s',
+            '%s_%s_%s_%s',
             get_class($transformer),
             $obj->objType(),
-            $obj->id()
+            $obj->id(),
+            $this->translator()->getLocale(),
         );
 
         $that = $this;

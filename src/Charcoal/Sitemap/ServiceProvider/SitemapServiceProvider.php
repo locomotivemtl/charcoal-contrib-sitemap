@@ -54,7 +54,8 @@ class SitemapServiceProvider implements ServiceProviderInterface
 
             return new SitemapPresenter(
                 $transformerFactory,
-                $container['cache/facade']
+                $container['cache/facade'],
+                $container['translator'],
             );
         };
         /**
@@ -73,12 +74,15 @@ class SitemapServiceProvider implements ServiceProviderInterface
                 'resolver_options' => [
                     'suffix'       => 'Transformer',
                     'replacements' => [
-                        'App/'  => 'App/Transformer/Sitemap/',
-                        'app/'  => 'app/transformer/sitemap/',
-                        'App\\' => 'App\\Transformer\\Sitemap\\',
-                        '-'         => '',
-                        '/'         => '\\',
-                        '.'         => '_'
+                        'App/Model/'    => 'App/Transformer/Sitemap/',
+                        'app/model'     => 'app/transformer/sitemap/',
+                        'App\\Model\\'  => 'App\\Transformer\\Sitemap\\',
+                        'App/'          => 'App/Transformer/Sitemap/',
+                        'app/'          => 'app/transformer/sitemap/',
+                        'App\\'         => 'App\\Transformer\\Sitemap\\',
+                        '-'             => '',
+                        '/'             => '\\',
+                        '.'             => '_'
                     ],
                 ],
             ]);
