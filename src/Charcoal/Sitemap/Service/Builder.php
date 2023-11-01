@@ -6,11 +6,11 @@ use Charcoal\Loader\CollectionLoader;
 use Charcoal\Object\RoutableInterface;
 use Charcoal\Translator\TranslatorAwareTrait;
 use Charcoal\View\ViewInterface;
-use Charcoal\View\ViewableInterface;
 use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
 use RuntimeException;
 use Slim\Http\Uri;
+use Traversable;
 
 /**
  * Sitemap builder from object hierarchy
@@ -157,7 +157,7 @@ class Builder
     /**
      * Build the sitemap array.
      *
-     * @return array The actual sitemap.
+     * @return list<list<array<string, mixed>>> Lists of sitemap locations for the given hierarchy.
      */
     public function build($ident = 'default')
     {
@@ -182,7 +182,7 @@ class Builder
 
         $this->buildSitemapOptions = array_merge($mapDefaults, $maps[$ident]);
 
-        $output = [];
+        $collections = [];
 
         foreach ($this->buildSitemapOptions['objects'] as $objType => $objOptions) {
             $objOptions = array_merge($objDefaults, $objOptions);
@@ -193,12 +193,15 @@ class Builder
                 }
             }
 
-            $output[] = $this->buildObject($objType, $objOptions);
+            $collection = $this->buildObject($objType, $objOptions);
+            if ($collection) {
+                $collections[] = $collection;
+            }
         }
 
         $this->buildSitemapOptions = [];
 
-        return $output;
+        return $collections;
     }
 
     /**
@@ -206,16 +209,17 @@ class Builder
      *
      * @param  class-string         $objType    The object type to collect.
      * @param  array<string, mixed> $objOptions The object's collection options.
-     * @param  ViewableInterface    $parentObj  The object's parent object to filter by.
+     * @param  array|object|null    $parentData The object's parent data presentation to filter by.
      * @param  int                  $level      The current depth of the sitemap hierarchy.
-     * @return array Local sitemap.
+     * @return ?list<array<string, mixed>> List of sitemap locations for the given hierarchy.
      */
-    protected function buildObject($objType, $objOptions, ViewableInterface $parentObj = null, $level = 0)
+    protected function buildObject($objType, $objOptions, $parentData = null, $level = 0)
     {
         // If the render of a condition is false or empty, dont process the object.
-        if ($parentObj && isset($objOptions['condition'])) {
-            if (!$this->view()->renderTemplate($objOptions['condition'], $parentObj)) {
-                return [];
+        if ($parentData && isset($objOptions['condition'])) {
+            $result = $this->renderData($objOptions['condition'], $parentData);
+            if (!$result) {
+                return null;
             }
         }
 
@@ -233,24 +237,25 @@ class Builder
 
         if (isset($objOptions['filters'])) {
             $filters = $objOptions['filters'];
-            if ($parentObj) {
-                $filters = $this->renderData($parentObj, $filters, $transformer);
+            if ($parentData) {
+                $filters = $this->renderData($filters, $parentData);
             }
             $loader->addFilters($filters);
         }
 
         if (isset($objOptions['orders'])) {
             $orders = $objOptions['orders'];
-            if ($parentObj) {
-                $orders = $this->renderData($parentObj, $orders, $transformer);
+            if ($parentData) {
+                $orders = $this->renderData($orders, $parentData);
             }
             $loader->addOrders($orders);
         }
 
         $objCollection = $loader->load();
 
-        $out = [];
         $level++;
+
+        $links = [];
 
         foreach ($availableLocales as $locale) {
             // Get opposite languages locales
@@ -269,6 +274,8 @@ class Builder
                     continue;
                 }
 
+                $objData = $this->sitemapPresenter()->transform($object, $transformer);
+
                 // Hierarchical (children, when defined)
                 $children = [];
                 if (!empty($objOptions['children'])) {
@@ -281,20 +288,27 @@ class Builder
                             }
                         }
 
-                        $children[] = $this->buildObject($childType, $childOptions, $object, $level);
+                        $collection = $this->buildObject($childType, $childOptions, $objData, $level);
+                        if ($collection) {
+                            $children[] = $collection;
+                        }
                     }
                 }
 
-                $url = trim($this->renderData($object, $objOptions['url'], $transformer));
+                $url = trim((string) $this->renderData($objOptions['url'], $objData));
                 if (!$relativeUrls) {
-                    $url = $this->withBaseUrl($url);
+                    $url = (string) $this->withBaseUrl($url);
                 }
 
-                $tmp = [
-                    'label'    => trim($this->renderData($object, $objOptions['label'], $transformer)),
+                $data = isset($objOptions['data'])
+                    ? $this->renderData($objOptions['data'], $objData)
+                    : [];
+
+                $link = [
+                    'label'    => trim($this->renderData($objOptions['label'], $objData)),
                     'url'      => $url,
                     'children' => $children,
-                    'data'     => isset($objOptions['data']) ? $this->renderData($object, $objOptions['data'], $transformer) : [],
+                    'data'     => $data,
                     'level'    => $level,
                     'lang'     => $locale,
                 ];
@@ -302,16 +316,16 @@ class Builder
                 // If you need a priority, fix your own rules
                 $priority = '';
                 if (isset($objOptions['priority']) && $objOptions['priority']) {
-                    $priority = $this->renderData($object, (string)$objOptions['priority'], $transformer);
+                    $priority = $this->renderData((string)$objOptions['priority'], $objData);
                 }
-                $tmp['priority'] = $priority;
+                $link['priority'] = $priority;
 
                 // If you need a date of last modification, fix your own rules
                 $last = '';
                 if (isset($objOptions['last_modified']) && $objOptions['last_modified']) {
-                    $last = $this->renderData($object, $objOptions['last_modified'], $transformer);
+                    $last = $this->renderData($objOptions['last_modified'], $objData);
                 }
-                $tmp['last_modified'] = $last;
+                $link['last_modified'] = $last;
 
                 // Opposite Languages
                 // Meant to be alternate, thus the lack of data rendering
@@ -323,9 +337,9 @@ class Builder
                         continue;
                     }
 
-                    $url = trim($this->renderData($object, $objOptions['url'], $transformer));
+                    $url = trim((string) $this->renderData($objOptions['url'], $objData));
                     if (!$relativeUrls) {
-                        $url = $this->withBaseUrl($url);
+                        $url = (string) $this->withBaseUrl($url);
                     }
 
                     $alternates[] = [
@@ -334,37 +348,43 @@ class Builder
                     ];
                 }
 
-                $tmp['alternates'] = $alternates;
+                $link['alternates'] = $alternates;
 
                 $this->translator()->setLocale($locale);
-                $out[] = $tmp;
+
+                $links[] = $link;
             }
         }
 
-        return $out;
+        return $links;
     }
 
     /**
      * Recursive data renderer
      *
-     * @param  ViewableInterface $obj  Object to render on.
-     * @param  mixed             $data Pretty much anything to be rendered
-     * @return mixed Rendered data.
+     * @param  mixed             $data    The data to render.
+     * @param  array|object|null $context The render context.
+     * @return mixed The rendered data.
      */
-    protected function renderData(ViewableInterface $obj, $data, $transformer = null)
+    protected function renderData($data, $context = null)
     {
         if (is_scalar($data)) {
-            $presentedObject = $this->sitemapPresenter()->transform($obj, $transformer);
-            return $this->view()->renderTemplate($data, $presentedObject);
+            return $this->view()->renderTemplate($data, $context);
         }
 
-        if (is_array($data)) {
-            $out = [];
-            foreach ($data as $key => $content) {
-                $out[$key] = $this->renderData($obj, $content, $transformer);
+        if (is_array($data) || ($data instanceof Traversable)) {
+            $rendered = [];
+            foreach ($data as $key => $value) {
+                $rendered[$key] = $this->renderData($value, $context);
             }
-            return $out;
+            return $rendered;
         }
+
+        if (is_object($data) && method_exists($data, '__toString')) {
+            return $this->view()->renderTemplate((string) $data, $context);
+        }
+
+        return null;
     }
 
     /**
