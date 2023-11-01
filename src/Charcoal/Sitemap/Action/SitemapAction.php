@@ -105,7 +105,7 @@ class SitemapAction extends AbstractAction
                     $objUrl = $this->baseUrl.$objUrl;
                 }
 
-                if ($this->isValidUriHost($objUrl)) {
+                if ($this->isExternalHost($objUrl)) {
                     continue;
                 }
 
@@ -127,7 +127,7 @@ class SitemapAction extends AbstractAction
                             $altUrl = $this->baseUrl.$altUrl;
                         }
 
-                        if ($this->isValidUriHost($altUrl)) {
+                        if ($this->isExternalHost($altUrl)) {
                             continue;
                         }
 
@@ -154,13 +154,13 @@ class SitemapAction extends AbstractAction
      * the application's base URI.
      *
      * @param  string $uri The URI to test.
-     * @return boolean
+     * @return bool
      */
-    protected function isValidUriHost($uri)
+    protected function isExternalHost($uri)
     {
-        $a = parse_url($uri, PHP_URL_HOST);
-        $b = parse_url($this->baseUrl, PHP_URL_HOST);
+        $target = parse_url($uri, PHP_URL_HOST);
+        $origin = parse_url($this->baseUrl, PHP_URL_HOST);
 
-        return ($a != $b && $a !== null);
+        return ($target !== null && $target !== $origin);
     }
 }
