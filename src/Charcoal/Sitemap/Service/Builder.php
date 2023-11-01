@@ -2,7 +2,6 @@
 
 namespace Charcoal\Sitemap\Service;
 
-use Charcoal\Factory\FactoryInterface;
 use Charcoal\Loader\CollectionLoader;
 use Charcoal\Object\RoutableInterface;
 use Charcoal\Translator\TranslatorAwareTrait;
@@ -29,13 +28,6 @@ class Builder
      * @var UriInterface
      */
     private $baseUrl;
-
-    /**
-     * Store the factory instance.
-     *
-     * @var FactoryInterface
-     */
-    private $modelFactory;
 
     /**
      * Store the collection loader instance.
@@ -65,10 +57,6 @@ class Builder
      */
     public function __construct(array $data)
     {
-        if (!isset($data['model/factory'])) {
-            throw new InvalidArgumentException('Model Factory must be defined in the SitemapBuilder Service.');
-        }
-
         if (!isset($data['model/collection/loader'])) {
             throw new InvalidArgumentException('Collection Loader must be defined in the SitemapBuilder Service.');
         }
@@ -82,7 +70,6 @@ class Builder
         }
 
         $this->setBaseUrl($data['base-url']);
-        $this->setModelFactory($data['model/factory']);
         $this->setCollectionLoader($data['model/collection/loader']);
         $this->setSitemapPresenter($data['sitemap/presenter']);
         $this->setTranslator($data['translator']);
@@ -213,11 +200,8 @@ class Builder
             }
         }
 
-        // Loadin the actual objects from the predefined settings
-        $factory = $this->modelFactory();
-        $obj     = $factory->create($class);
 
-        $loader = $this->collectionLoader()->setModel($obj);
+        $loader = $this->collectionLoader()->setModel($class);
 
         // From the filters
         if (isset($options['filters'])) {
@@ -382,35 +366,6 @@ class Builder
     {
         $this->objectHierarchy = $hierarchy;
         return $this;
-    }
-
-    /**
-     * Retrieve the model factory.
-     *
-     * @throws RuntimeException If the model factory is missing.
-     * @return FactoryInterface
-     */
-    public function modelFactory()
-    {
-        if (!isset($this->modelFactory)) {
-            throw new RuntimeException(sprintf(
-                'Model Factory is not defined for [%s]',
-                get_class($this)
-            ));
-        }
-
-        return $this->modelFactory;
-    }
-
-    /**
-     * Set an model factory.
-     *
-     * @param  FactoryInterface $factory The factory to create models.
-     * @return void
-     */
-    protected function setModelFactory(FactoryInterface $factory)
-    {
-        $this->modelFactory = $factory;
     }
 
     /**

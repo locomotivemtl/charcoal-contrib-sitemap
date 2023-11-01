@@ -28,7 +28,6 @@ class SitemapServiceProvider implements ServiceProviderInterface
         $container['charcoal/sitemap/builder'] = function (Container $container) {
             $builder = new Builder([
                 'base-url'                => $container['base-url'],
-                'model/factory'           => $container['model/factory'],
                 'model/collection/loader' => $container['model/collection/loader'],
                 'sitemap/presenter'       => $container['sitemap/presenter'],
                 'translator'              => $container['translator'],
