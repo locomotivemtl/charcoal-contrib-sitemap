@@ -49,7 +49,10 @@ class SitemapModule extends AbstractModule
             RequestInterface $request,
             ResponseInterface $response,
             array $args = []
-        ) use ($config, $container) {
+        ) use (
+            $config,
+            $container
+        ) {
             $routeControllerClass = $this['route/controller/action/class'];
 
             $routeController = $container['route/factory']->create($routeControllerClass, [

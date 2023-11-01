@@ -99,7 +99,7 @@ class SitemapAction extends AbstractAction
     {
         $alternateUrl = ltrim($alternate['url'], '/');
         if (parse_url($alternateUrl, PHP_URL_HOST) === null) {
-            $alternateUrl = $this->baseUrl.$alternateUrl;
+            $alternateUrl = $this->baseUrl . $alternateUrl;
         }
 
         if ($this->isExternalHost($alternateUrl)) {
@@ -137,7 +137,7 @@ class SitemapAction extends AbstractAction
     {
         $linkUrl = ltrim($link['url'], '/');
         if (parse_url($linkUrl, PHP_URL_HOST) === null) {
-            $linkUrl = $this->baseUrl.$linkUrl;
+            $linkUrl = $this->baseUrl . $linkUrl;
         }
 
         if (!$this->isExternalHost($linkUrl)) {
@@ -173,13 +173,13 @@ class SitemapAction extends AbstractAction
      */
     protected function createXmlEnvelope()
     {
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
-              .'<urlset'
-              .' xmlns="'.$this->xmlNamespaces['xmlns'].'"'
-              .' xmlns:xhtml="'.$this->xmlNamespaces['xhtml'].'"'
-              .' xmlns:xsi="'.$this->xmlNamespaces['xsi'].'"'
-              .' xsi:schemaLocation="'.$this->xsiNamespaces['schemaLocation'].'"'
-              .'/>';
+        $xml  = '<?xml version="1.0" encoding="UTF-8"?>';
+        $xml .= '<urlset';
+        $xml .= ' xmlns="' . $this->xmlNamespaces['xmlns'] . '"';
+        $xml .= ' xmlns:xhtml="' . $this->xmlNamespaces['xhtml'] . '"';
+        $xml .= ' xmlns:xsi="' . $this->xmlNamespaces['xsi'] . '"';
+        $xml .= ' xsi:schemaLocation="' . $this->xsiNamespaces['schemaLocation'] . '"';
+        $xml .= '/>';
 
         return new SimpleXmlElement($xml);
     }
