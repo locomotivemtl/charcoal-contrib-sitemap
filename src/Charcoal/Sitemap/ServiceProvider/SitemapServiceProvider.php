@@ -31,6 +31,7 @@ class SitemapServiceProvider implements ServiceProviderInterface
                 'model/collection/loader' => $container['model/collection/loader'],
                 'sitemap/presenter'       => $container['sitemap/presenter'],
                 'translator'              => $container['translator'],
+                'view'                    => $container['view'],
             ]);
 
             $config = $container['config'];

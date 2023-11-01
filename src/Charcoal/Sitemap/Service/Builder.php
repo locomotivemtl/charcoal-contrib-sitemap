@@ -5,6 +5,7 @@ namespace Charcoal\Sitemap\Service;
 use Charcoal\Loader\CollectionLoader;
 use Charcoal\Object\RoutableInterface;
 use Charcoal\Translator\TranslatorAwareTrait;
+use Charcoal\View\ViewInterface;
 use Charcoal\View\ViewableInterface;
 use InvalidArgumentException;
 use Psr\Http\Message\UriInterface;
@@ -69,6 +70,11 @@ class Builder
     private $sitemapPresenter;
 
     /**
+     * @var ViewInterface
+     */
+    private $view;
+
+    /**
      * Create the Sitemap Builder.
      *
      * @param  array $data Class dependencies.
@@ -89,10 +95,15 @@ class Builder
             throw new InvalidArgumentException('Translator must be defined in the SitemapBuilder Service.');
         }
 
+        if (!isset($data['view'])) {
+            throw new InvalidArgumentException('View must be defined in the SitemapBuilder Service.');
+        }
+
         $this->setBaseUrl($data['base-url']);
         $this->setCollectionLoader($data['model/collection/loader']);
         $this->setSitemapPresenter($data['sitemap/presenter']);
         $this->setTranslator($data['translator']);
+        $this->setView($data['view']);
 
         return $this;
     }
@@ -203,7 +214,7 @@ class Builder
     {
         // If the render of a condition is false or empty, dont process the object.
         if ($parentObj && isset($objOptions['condition'])) {
-            if (!$parentObj->view()->renderTemplate($objOptions['condition'], $parentObj)) {
+            if (!$this->view()->renderTemplate($objOptions['condition'], $parentObj)) {
                 return [];
             }
         }
@@ -344,7 +355,7 @@ class Builder
     {
         if (is_scalar($data)) {
             $presentedObject = $this->sitemapPresenter()->transform($obj, $transformer);
-            return $obj->view()->renderTemplate($data, $presentedObject);
+            return $this->view()->renderTemplate($data, $presentedObject);
         }
 
         if (is_array($data)) {
@@ -421,6 +432,36 @@ class Builder
     {
         $this->sitemapPresenter = $presenter;
         return $this;
+    }
+
+    /**
+     * Set the renderable view.
+     *
+     * @param ViewInterface|array $view The view instance to use to render.
+     * @return self
+     */
+    protected function setView(ViewInterface $view)
+    {
+        $this->view = $view;
+        return $this;
+    }
+
+    /**
+     * Retrieve the renderable view.
+     *
+     * @throws RuntimeException If the view is missing.
+     * @return ViewInterface
+     */
+    public function view()
+    {
+        if (!isset($this->view)) {
+            throw new RuntimeException(sprintf(
+                'View is not defined for [%s]',
+                get_class($this)
+            ));
+        }
+
+        return $this->view;
     }
 
     /**
