@@ -269,9 +269,11 @@ class Builder
                     }
                 }
 
-                $url = $relativeUrls
-                    ? trim($this->renderData($object, $options['url'], $transformer))
-                    : $this->withBaseUrl(trim($this->renderData($object, $options['url'], $transformer)));
+                $url = trim($this->renderData($object, $options['url'], $transformer));
+                if (!$relativeUrls) {
+                    $url = $this->withBaseUrl($url);
+                }
+
                 $tmp = [
                     'label'    => trim($this->renderData($object, $options['label'], $transformer)),
                     'url'      => $url,
@@ -305,9 +307,10 @@ class Builder
                         continue;
                     }
 
-                    $url = $relativeUrls
-                        ? trim($this->renderData($object, $options['url'], $transformer))
-                        : $this->withBaseUrl(trim($this->renderData($object, $options['url'], $transformer)));
+                    $url = trim($this->renderData($object, $options['url'], $transformer));
+                    if (!$relativeUrls) {
+                        $url = $this->withBaseUrl($url);
+                    }
 
                     $alternates[] = [
                         'url'  => $url,
