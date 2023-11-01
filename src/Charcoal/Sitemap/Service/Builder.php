@@ -254,10 +254,10 @@ class Builder
 
         foreach ($availableLocales as $locale) {
             // Get opposite languages locales
-            $oppositeLang = [];
-            foreach ($availableLocales as $l) {
-                if ($l !== $locale) {
-                    $oppositeLang[] = $l;
+            $alternateLocales = [];
+            foreach ($availableLocales as $alternateLocale) {
+                if ($alternateLocale !== $locale) {
+                    $alternateLocales[] = $alternateLocale;
                 }
             }
 
@@ -316,8 +316,8 @@ class Builder
                 // Opposite Languages
                 // Meant to be alternate, thus the lack of data rendering
                 $alternates = [];
-                foreach ($oppositeLang as $ol) {
-                    $this->translator()->setLocale($ol);
+                foreach ($alternateLocales as $alternateLocale) {
+                    $this->translator()->setLocale($alternateLocale);
 
                     if ($checkActiveRoutes && $object instanceof RoutableInterface && !$object->isActiveRoute()) {
                         continue;
@@ -330,7 +330,7 @@ class Builder
 
                     $alternates[] = [
                         'url'  => $url,
-                        'lang' => $ol,
+                        'lang' => $alternateLocale,
                     ];
                 }
 
