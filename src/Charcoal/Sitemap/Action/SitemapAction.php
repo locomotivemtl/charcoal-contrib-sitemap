@@ -26,6 +26,26 @@ class SitemapAction extends AbstractAction
     protected $sitemapXml;
 
     /**
+     * Map of registered XML namespaces.
+     *
+     * @var array<string, string>
+     */
+    protected $xmlNamespaces = [
+        'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
+        'xhtml' => 'http://www.w3.org/1999/xhtml',
+        'xsi'   => 'http://www.w3.org/2001/XMLSchema-instance',
+    ];
+
+    /**
+     * Map of registered XSI namespaces.
+     *
+     * @var array<string, string>
+     */
+    protected $xsiNamespaces = [
+        'schemaLocation' => 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd',
+    ];
+
+    /**
      * Inject dependencies from a DI Container.
      *
      * @param  Container $container A dependencies container instance.
@@ -50,8 +70,8 @@ class SitemapAction extends AbstractAction
     {
         $this->setMode(self::MODE_XML);
 
-        $sitemapLinks = $this->sitemapBuilder->build('xml');
-        $this->sitemapXml = $this->toXml($sitemapLinks);
+        $collections = $this->sitemapBuilder->build('xml');
+        $this->sitemapXml = $this->createXmlFromCollections($collections);
 
         $this->setSuccess(true);
 
@@ -69,78 +89,137 @@ class SitemapAction extends AbstractAction
     }
 
     /**
-     * Convert the collection of links into an XML document.
+     * Adds an alternate to a given XML element.
      *
-     * @param  array $map The collection of links.
-     * @return string|null
+     * @param  SimpleXMLElement     $urlElement The XML document to mutate.
+     * @param  array<string, mixed> $alternate     A sitemap link.
+     * @return void
      */
-    protected function toXml($map)
+    protected function addAlternateToXml(SimpleXMLElement $urlElement, array $alternate)
     {
-        $xmlNs = [
-            'xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9',
-            'xhtml' => 'http://www.w3.org/1999/xhtml',
-            'xsi'   => 'http://www.w3.org/2001/XMLSchema-instance',
-        ];
+        $alternateUrl = ltrim($alternate['url'], '/');
+        if (parse_url($alternateUrl, PHP_URL_HOST) === null) {
+            $alternateUrl = $this->baseUrl.$alternateUrl;
+        }
 
-        $xsiNs = [
-            'schemaLocation' => 'http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd',
-        ];
+        if ($this->isExternalHost($alternateUrl)) {
+            return;
+        }
 
-        $xhtmlNs = 'http://www.w3.org/1999/xhtml';
+        $linkElement = $urlElement->addChild('xhtml:link', null, $this->xmlNamespaces['xhtml']);
+        $linkElement->addAttribute('rel', 'alternate');
+        $linkElement->addAttribute('hreflang', $alternate['lang']);
+        $linkElement->addAttribute('href', $alternateUrl);
+    }
 
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
-              .'<urlset'
-              .' xmlns="'.$xmlNs['xmlns'].'"'
-              .' xmlns:xhtml="'.$xmlNs['xhtml'].'"'
-              .' xmlns:xsi="'.$xmlNs['xsi'].'"'
-              .' xsi:schemaLocation="'.$xsiNs['schemaLocation'].'"'
-              .'/>';
+    /**
+     * Adds a single collection of links to a given XML element.
+     *
+     * @param  SimpleXMLElement           $urlsetElement The XML document to mutate.
+     * @param  list<array<string, mixed>> $collection    List of sitemap locations.
+     * @return void
+     */
+    protected function addCollectionToXml(SimpleXMLElement $urlsetElement, array $collection)
+    {
+        foreach ($collection as $link) {
+            $this->addLinkToXml($urlsetElement, $link);
+        }
+    }
 
-        $urlsetEl = new SimpleXmlElement($xml);
+    /**
+     * Adds a link, and any children and alternates, to a given XML element.
+     *
+     * @param  SimpleXMLElement     $urlsetElement The XML document to mutate.
+     * @param  array<string, mixed> $link          A sitemap location.
+     * @return void
+     */
+    protected function addLinkToXml(SimpleXMLElement $urlsetElement, array $link)
+    {
+        $linkUrl = ltrim($link['url'], '/');
+        if (parse_url($linkUrl, PHP_URL_HOST) === null) {
+            $linkUrl = $this->baseUrl.$linkUrl;
+        }
 
-        foreach ($map as $objs) {
-            foreach ($objs as $obj) {
-                $objUrl = ltrim($obj['url'], '/');
-                if (parse_url($objUrl, PHP_URL_HOST) === null) {
-                    $objUrl = $this->baseUrl.$objUrl;
-                }
+        if (!$this->isExternalHost($linkUrl)) {
+            $urlElement = $urlsetElement->addChild('url');
+            $urlElement->addChild('loc', $linkUrl);
 
-                if ($this->isExternalHost($objUrl)) {
-                    continue;
-                }
+            if ($link['last_modified']) {
+                $urlElement->addChild('lastmod', $link['last_modified']);
+            }
 
-                $urlEl = $urlsetEl->addChild('url');
-                $urlEl->addChild('loc', $objUrl);
+            if ($link['priority']) {
+                $urlElement->addChild('priority', $link['priority']);
+            }
 
-                if ($obj['last_modified']) {
-                    $urlEl->addChild('lastmod', $obj['last_modified']);
-                }
-
-                if ($obj['priority']) {
-                    $urlEl->addChild('priority', $obj['priority']);
-                }
-
-                if ($obj['alternates']) {
-                    foreach ($obj['alternates'] as $alt) {
-                        $altUrl = ltrim($alt['url'], '/');
-                        if (parse_url($altUrl, PHP_URL_HOST) === null) {
-                            $altUrl = $this->baseUrl.$altUrl;
-                        }
-
-                        if ($this->isExternalHost($altUrl)) {
-                            continue;
-                        }
-
-                        $linkEl = $urlEl->addChild('xhtml:link', null, $xmlNs['xhtml']);
-                        $linkEl->addAttribute('rel', 'alternate');
-                        $linkEl->addAttribute('hreflang', $alt['lang']);
-                        $linkEl->addAttribute('href', $altUrl);
-                    }
+            if ($link['alternates']) {
+                foreach ($link['alternates'] as $alternate) {
+                    $this->addAlternateToXml($urlElement, $alternate);
                 }
             }
         }
 
-        $xml = $urlsetEl->asXml();
+        if ($link['children']) {
+            foreach ($link['children'] as $children) {
+                $this->addCollectionToXml($urlsetElement, $children);
+            }
+        }
+    }
+
+    /**
+     * Creates a new XML object.
+     *
+     * @return SimpleXmlElement
+     */
+    protected function createXmlEnvelope()
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'
+              .'<urlset'
+              .' xmlns="'.$this->xmlNamespaces['xmlns'].'"'
+              .' xmlns:xhtml="'.$this->xmlNamespaces['xhtml'].'"'
+              .' xmlns:xsi="'.$this->xmlNamespaces['xsi'].'"'
+              .' xsi:schemaLocation="'.$this->xsiNamespaces['schemaLocation'].'"'
+              .'/>';
+
+        return new SimpleXmlElement($xml);
+    }
+
+    /**
+     * Converts many collections of links into an XML document.
+     *
+     * @param  list<list<array<string, mixed>>> $collections Lists of sitemap locations.
+     * @return string|null
+     */
+    protected function createXmlFromCollections(array $collections)
+    {
+        $urlsetElement = $this->createXmlEnvelope();
+
+        foreach ($collections as $collection) {
+            $this->addCollectionToXml($urlsetElement, $collection);
+        }
+
+        $xml = $urlsetElement->asXml();
+
+        if (is_string($xml)) {
+            return $xml;
+        }
+
+        return null;
+    }
+
+    /**
+     * Converts a single collection of links into an XML document.
+     *
+     * @param  list<array<string, mixed>> $collection List of sitemap locations.
+     * @return string|null
+     */
+    protected function createXmlFromCollection(array $collection)
+    {
+        $urlsetElement = $this->createXmlEnvelope();
+
+        $this->addCollectionToXml($urlsetElement, $collection);
+
+        $xml = $urlsetElement->asXml();
 
         if (is_string($xml)) {
             return $xml;
