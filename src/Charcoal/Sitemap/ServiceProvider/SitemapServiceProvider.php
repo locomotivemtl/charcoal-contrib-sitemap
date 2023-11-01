@@ -30,8 +30,8 @@ class SitemapServiceProvider implements ServiceProviderInterface
                 'base-url'                => $container['base-url'],
                 'model/factory'           => $container['model/factory'],
                 'model/collection/loader' => $container['model/collection/loader'],
+                'sitemap/presenter'       => $container['sitemap/presenter'],
                 'translator'              => $container['translator'],
-                'sitemap/presenter'       => $container['sitemap/presenter']
             ]);
 
             $config = $container['config'];
@@ -41,16 +41,14 @@ class SitemapServiceProvider implements ServiceProviderInterface
             return $builder;
         };
 
-
-
         /**
-         * @param Container $container
-         * @return GenericPresenter
+         * @param  Container $container
+         * @return SitemapPresenter
          */
         $container['sitemap/presenter'] = function (Container $container) {
-            $transformerFactory = isset($container['transformer/factory']) ?
-                $container['transformer/factory'] :
-                $container['sitemap/transformer/factory'];
+            $transformerFactory = isset($container['transformer/factory'])
+                ? $container['transformer/factory']
+                : $container['sitemap/transformer/factory'];
 
             return new SitemapPresenter(
                 $transformerFactory,
@@ -58,18 +56,20 @@ class SitemapServiceProvider implements ServiceProviderInterface
                 $container['translator'],
             );
         };
+
         /**
          * Generic transformer factory.
+         *
          * For a class name app/model/class, it will resolve to App/Transformer/Object/ClassTransformer
          *
-         * @param Container $container
+         * @param  Container $container
          * @return GenericFactory
          */
         $container['sitemap/transformer/factory'] = function (Container $container) {
             return new GenericFactory([
                 'arguments'        => [
                     'container' => $container,
-                    'logger'    => $container['logger']
+                    'logger'    => $container['logger'],
                 ],
                 'resolver_options' => [
                     'suffix'       => 'Transformer',
@@ -82,7 +82,7 @@ class SitemapServiceProvider implements ServiceProviderInterface
                         'App\\'         => 'App\\Transformer\\Sitemap\\',
                         '-'             => '',
                         '/'             => '\\',
-                        '.'             => '_'
+                        '.'             => '_',
                     ],
                 ],
             ]);

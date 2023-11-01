@@ -72,10 +72,12 @@ class SitemapPresenter
 
         $that = $this;
 
-        return $this->getCacheFacade()->get($key,
+        return $this->getCacheFacade()->get(
+            $key,
             function () use ($obj, $transformer, $that) {
                 return $that->transmogrify($obj, $transformer($obj));
-            });
+            }
+        );
     }
 
     /**

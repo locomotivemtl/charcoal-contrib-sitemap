@@ -28,28 +28,28 @@ class Builder
     /**
      * @var UriInterface
      */
-    protected $baseUrl;
+    private $baseUrl;
 
     /**
      * Store the factory instance.
      *
      * @var FactoryInterface
      */
-    protected $modelFactory;
+    private $modelFactory;
+
+    /**
+     * Store the collection loader instance.
+     *
+     * @var CollectionLoader
+     */
+    private $collectionLoader;
 
     /**
      * Object hierarchy as defined in the config.json
      *
-     * @var array
+     * @var array<string, array<string, mixed>>
      */
     private $objectHierarchy;
-
-    /**
-     * Store the factory instance.
-     *
-     * @var FactoryInterface
-     */
-    private $collectionLoader;
 
     /**
      * @var SitemapPresenter
@@ -84,8 +84,8 @@ class Builder
         $this->setBaseUrl($data['base-url']);
         $this->setModelFactory($data['model/factory']);
         $this->setCollectionLoader($data['model/collection/loader']);
-        $this->setTranslator($data['translator']);
         $this->setSitemapPresenter($data['sitemap/presenter']);
+        $this->setTranslator($data['translator']);
 
         return $this;
     }
@@ -451,12 +451,12 @@ class Builder
     }
 
     /**
-     * @param SitemapPresenter $sitemapPresenter
+     * @param SitemapPresenter $presenter
      * @return Builder
      */
-    public function setSitemapPresenter(SitemapPresenter $sitemapPresenter)
+    public function setSitemapPresenter(SitemapPresenter $presenter)
     {
-        $this->sitemapPresenter = $sitemapPresenter;
+        $this->sitemapPresenter = $presenter;
         return $this;
     }
 
