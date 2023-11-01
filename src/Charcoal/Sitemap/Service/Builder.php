@@ -195,7 +195,7 @@ class Builder
     {
         // If the render of a condition is false or empty, dont process the object.
         if ($parent && isset($options['condition'])) {
-            if (!$parent->view()->render($options['condition'], $parent)) {
+            if (!$parent->view()->renderTemplate($options['condition'], $parent)) {
                 return [];
             }
         }
@@ -339,7 +339,7 @@ class Builder
     {
         if (is_scalar($data)) {
             $presentedObject = $this->sitemapPresenter()->transform($obj, $transformer);
-            return $obj->view()->render($data, $presentedObject);
+            return $obj->view()->renderTemplate($data, $presentedObject);
         }
 
         if (is_array($data)) {
