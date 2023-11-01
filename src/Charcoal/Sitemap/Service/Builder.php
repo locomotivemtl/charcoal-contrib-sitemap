@@ -276,14 +276,12 @@ class Builder
                     continue;
                 }
 
-                $presentedParent = $this->sitemapPresenter()->transform($object, $transformer);
-
                 // Hierarchical (children, when defined)
                 $cs = [];
                 if (!empty($children)) {
                     foreach ($children as $cname => $opts) {
                         $opts = array_merge($this->defaultOptions(), $opts);
-                        $cs[] = $this->buildObject($cname, $opts, $presentedParent, $level);
+                        $cs[] = $this->buildObject($cname, $opts, $object, $level);
                     }
                 }
 
