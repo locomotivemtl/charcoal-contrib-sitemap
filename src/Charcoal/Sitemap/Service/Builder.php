@@ -337,7 +337,9 @@ class Builder
                         continue;
                     }
 
-                    $url = trim((string) $this->renderData($objOptions['url'], $objData));
+                    $presentedObject = $this->sitemapPresenter()->transform($object, $transformer);
+                    $url = trim((string) $this->renderData($objOptions['url'], $presentedObject));
+
                     if (!$relativeUrls) {
                         $url = (string) $this->withBaseUrl($url);
                     }
