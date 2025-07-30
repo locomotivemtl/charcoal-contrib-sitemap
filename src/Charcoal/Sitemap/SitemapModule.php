@@ -23,8 +23,7 @@ class SitemapModule extends AbstractModule
 
         $this->setupPublicRoutes();
 
-        $sitemapServiceProvider = new SitemapServiceProvider();
-        $container->register($sitemapServiceProvider);
+        (new SitemapServiceProvider())->register($container);
 
         return $this;
     }

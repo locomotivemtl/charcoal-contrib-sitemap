@@ -5,71 +5,70 @@ namespace Charcoal\Sitemap\ServiceProvider;
 use Charcoal\Factory\GenericFactory;
 use Charcoal\Sitemap\Service\Builder;
 use Charcoal\Sitemap\Service\SitemapPresenter;
-use Pimple\Container;
-use Pimple\ServiceProviderInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * The Sitemap Contrib Service Provider.
  */
-class SitemapServiceProvider implements ServiceProviderInterface
+class SitemapServiceProvider
 {
     /**
      * Register the contrib's services.
      *
-     * @param  Container $container The service locator.
+     * @param  ContainerInterface $container The service locator.
      * @return void
      */
-    public function register(Container $container)
+    public function register(ContainerInterface $container)
     {
         /**
-         * @param  Container $container the service locator.
+         * @param  ContainerInterface $container the service locator.
          * @return Builder
          */
-        $container['charcoal/sitemap/builder'] = function (Container $container) {
+        $container->set('charcoal/sitemap/builder', function (ContainerInterface $container) {
             $builder = new Builder([
-                'base-url'                => $container['base-url'],
-                'model/collection/loader' => $container['model/collection/loader'],
-                'sitemap/presenter'       => $container['sitemap/presenter'],
-                'translator'              => $container['translator'],
-                'view'                    => $container['view'],
+                'base-url'                => $container->get('base-url'),
+                'model/collection/loader' => $container->get('model/collection/loader'),
+                'sitemap/presenter'       => $container->get('sitemap/presenter'),
+                'translator'              => $container->get('translator'),
+                'view'                    => $container->get('view'),
             ]);
 
-            $config = $container['config'];
+            $config = $container->get('config');
 
             $builder->setObjectHierarchy($config->get('sitemap'));
 
             return $builder;
-        };
+        });
 
         /**
-         * @param  Container $container
+         * @param  ContainerInterface $container
          * @return SitemapPresenter
          */
-        $container['sitemap/presenter'] = function (Container $container) {
-            $transformerFactory = isset($container['transformer/factory'])
-                ? $container['transformer/factory']
-                : $container['sitemap/transformer/factory'];
+        $container->set('sitemap/presenter', function (ContainerInterface $container) {
+            $transformerFactory = $container->has('transformer/factory')
+                ? $container->get('transformer/factory')
+                : $container->get('sitemap/transformer/factory');
 
             return new SitemapPresenter(
                 $transformerFactory,
-                $container['cache/facade'],
-                $container['translator'],
+                $container->get('cache/facade'),
+                $container->get('translator'),
             );
-        };
+        });
 
         /**
          * Generic transformer factory.
          *
          * For a class name app/model/class, it will resolve to App/Transformer/Object/ClassTransformer
          *
-         * @param  Container $container
+         * @param  ContainerInterface $container
          * @return GenericFactory
          */
-        $container['sitemap/transformer/factory'] = function (Container $container) {
+        $container->set('sitemap/transformer/factory', function (ContainerInterface $container) {
             return new GenericFactory([
                 'arguments'        => [
                     'container' => $container,
-                    'logger'    => $container['logger'],
+                    'logger'    => $container->get('logger'),
                 ],
                 'resolver_options' => [
                     'suffix'       => 'Transformer',
@@ -86,6 +85,6 @@ class SitemapServiceProvider implements ServiceProviderInterface
                     ],
                 ],
             ]);
-        };
+        });
     }
 }
