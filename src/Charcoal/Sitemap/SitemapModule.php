@@ -54,7 +54,7 @@ class SitemapModule extends AbstractModule
         ) {
             $routeControllerClass = $this['route/controller/action/class'];
 
-            $routeController = $container['route/factory']->create($routeControllerClass, [
+            $routeController = $container->get('route/factory')->create($routeControllerClass, [
                 'config' => $config,
                 'logger' => $this['logger'],
             ]);

@@ -269,7 +269,7 @@ The Sitemap module will include all necessary service providers and set the rout
 Given the settings above:
 
 ```php
-$builder = $container['charcoal/sitemap/builder'];
+$builder = $container->get('charcoal/sitemap/builder');
 $sitemap = $builder->build('footer_sitemap'); // footer_sitemap is the ident of the settings you want.
 ```
 You can also use the `SitemapBuilderAwareTrait`, which includes the setter and getter for the sitemap builder, in order

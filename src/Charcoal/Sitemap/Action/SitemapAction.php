@@ -3,10 +3,10 @@
 namespace Charcoal\Sitemap\Action;
 
 use Charcoal\App\Action\AbstractAction;
-use Pimple\Container;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use SimpleXMLElement;
+use Psr\Container\ContainerInterface;
 
 /**
  * Class SitemapAction
@@ -48,15 +48,15 @@ class SitemapAction extends AbstractAction
     /**
      * Inject dependencies from a DI Container.
      *
-     * @param  Container $container A dependencies container instance.
+     * @param  ContainerInterface $container A dependencies container instance.
      * @return void
      */
-    public function setDependencies(Container $container)
+    public function setDependencies(ContainerInterface $container)
     {
         parent::setDependencies($container);
 
-        $this->sitemapBuilder = $container['charcoal/sitemap/builder'];
-        $this->baseUrl        = $container['base-url'];
+        $this->sitemapBuilder = $container->get('charcoal/sitemap/builder');
+        $this->baseUrl        = $container->get('base-url');
     }
 
     /**
