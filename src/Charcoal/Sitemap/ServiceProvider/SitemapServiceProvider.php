@@ -4,6 +4,7 @@ namespace Charcoal\Sitemap\ServiceProvider;
 
 use Charcoal\Factory\GenericFactory;
 use Charcoal\Sitemap\Service\Builder;
+use Charcoal\Sitemap\Service\SitemapGenerator;
 use Charcoal\Sitemap\Service\SitemapPresenter;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
@@ -42,7 +43,16 @@ class SitemapServiceProvider implements ServiceProviderInterface
         };
 
         /**
-         * @param  Container $container
+         * @param Container $container
+         * @return SitemapGenerator
+         */
+        $container['charcoal/sitemap/generator'] = function (Container $container) {
+            return new SitemapGenerator($container);
+        };
+
+
+        /**
+         * @param Container $container
          * @return SitemapPresenter
          */
         $container['sitemap/presenter'] = function (Container $container) {

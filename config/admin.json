@@ -1,0 +1,26 @@
+{
+    "admin": {
+        "routes": {
+            "actions": {
+                "sitemap/generate": {
+                    "route": "/sitemap/generate",
+                    "controller": "charcoal/sitemap/action/generate-sitemap",
+                    "methods": [ "GET" ]
+                }
+            }
+        },
+
+        "system_menu": {
+            "items": {
+                "sitemap": {
+                    "label": {
+                        "en": "Generate Sitemap",
+                        "fr": "Générer le sitemap"
+                    },
+                    "url": "sitemap/generate",
+                    "id": "btn-generate-sitemap"
+                }
+            }
+        }
+    }
+}

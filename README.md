@@ -3,9 +3,6 @@ Charcoal Sitemap
 
 [![License][badge-license]][charcoal-contrib-sitemap]
 [![Latest Stable Version][badge-version]][charcoal-contrib-sitemap]
-[![Code Quality][badge-scrutinizer]][dev-scrutinizer]
-[![Coverage Status][badge-coveralls]][dev-coveralls]
-[![Build Status][badge-travis]][dev-travis]
 
 A [Charcoal][charcoal-app] service for generating a sitemap.
 
@@ -21,9 +18,6 @@ A [Charcoal][charcoal-app] service for generating a sitemap.
 -   [Usage](#usage)
     -   [Using the builder](#using-the-builder)
     -   [Sitemap.xml](#sitemap.xml)
--   [Development](#development)
-    -  [Development Dependencies](#development-dependencies)
-    -  [Coding Style](#coding-style)
 -   [Credits](#credits)
 -   [License](#license)
 
@@ -43,7 +37,7 @@ $ composer require locomotivemtl/charcoal-contrib-sitemap
 
 #### Required
 
--   **[PHP 5.6+](https://php.net)**: _PHP 7_ is recommended.
+-   **[PHP 7.4+](https://php.net)**
 -   **[locomotivemtl/charcoal-app][charcoal-app]**: ^0.8
 -   **[locomotivemtl/charcoal-core][charcoal-core]**: ^0.3
 -   **[locomotivemtl/charcoal-factory][charcoal-factory]**: ^0.4
@@ -266,6 +260,20 @@ The Sitemap module will include all necessary service providers and set the rout
 }
 ```
 
+Also add the necessary JS to allow sitemap generation from the back-end interface:
+
+```json
+    "assets": {
+        "collections": {
+            "js": {
+                "files": [
+                    "vendor/locomotivemtl/charcoal-contrib-sitemap/assets/scripts/contrib-sitemap.js"
+                ]
+            }
+        }
+    }
+```
+
 Given the settings above:
 
 ```php
@@ -282,52 +290,7 @@ to use it with minimal code in every necessary class.
 This contrib provides a route for `sitemap.xml` that dynamically loads the `xml` config and outputs it 
 as an XML for crawlers to read.
 
-
-
-## Development
-
-To install the development environment:
-
-```shell
-$ composer install
-```
-
-To run the scripts (phplint, phpcs, and phpunit):
-
-```shell
-$ composer test
-```
-
-
-
-### API Documentation
-
--   The auto-generated `phpDocumentor` API documentation is available at:  
-    [https://locomotivemtl.github.io/charcoal-contrib-sitemap/docs/master/](https://locomotivemtl.github.io/charcoal-contrib-sitemap/docs/master/)
--   The auto-generated `apigen` API documentation is available at:  
-    [https://codedoc.pub/locomotivemtl/charcoal-contrib-sitemap/master/](https://codedoc.pub/locomotivemtl/charcoal-contrib-sitemap/master/index.html)
-
-
-
-### Development Dependencies
-
--   [php-coveralls/php-coveralls](https://packagist.org/packages/php-coveralls/php-coveralls)
--   [phpunit/phpunit](https://packagist.org/packages/phpunit/phpunit)
--   [squizlabs/php_codesniffer](https://packagist.org/packages/squizlabs/php_codesniffer)
-
-
-
-### Coding Style
-
-The charcoal-contrib-sitemap module follows the Charcoal coding-style:
-
--   [_PSR-1_][psr-1]
--   [_PSR-2_][psr-2]
--   [_PSR-4_][psr-4], autoloading is therefore provided by _Composer_.
--   [_phpDocumentor_](http://phpdoc.org/) comments.
--   [phpcs.xml.dist](phpcs.xml.dist) and [.editorconfig](.editorconfig) for coding standards.
-
-> Coding style validation / enforcement can be performed with `composer phpcs`. An auto-fixer is also available with `composer phpcbf`.
+You can generate a `sitemap.xml` file with the script `vendor/bin/charcoal sitemap/generate` and the admin action `admin/sitemap/generate`. It is recommanded to add a cron job to regenerate the file to avoid outdated sitemap.xml file.
 
 
 
@@ -349,10 +312,6 @@ Charcoal is licensed under the MIT license. See [LICENSE](LICENSE) for details.
 [charcoal-factory]:          https://packagist.org/packages/locomotivemtl/charcoal-factory
 [charcoal-object]:           https://packagist.org/packages/locomotivemtl/charcoal-object
 [charcoal-translator]:       https://packagist.org/packages/locomotivemtl/charcoal-translator
-
-[dev-scrutinizer]:    https://scrutinizer-ci.com/g/locomotivemtl/charcoal-contrib-sitemap/
-[dev-coveralls]:      https://coveralls.io/r/locomotivemtl/charcoal-contrib-sitemap
-[dev-travis]:         https://app.travis-ci.com/github/locomotivemtl/charcoal-contrib-sitemap
 
 [badge-license]:      https://img.shields.io/packagist/l/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square
 [badge-version]:      https://img.shields.io/packagist/v/locomotivemtl/charcoal-contrib-sitemap.svg?style=flat-square

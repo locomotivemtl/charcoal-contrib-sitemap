@@ -9,13 +9,20 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
- * Class SitemapAction
+ * Class GenerateSitemapAction
  */
-class SitemapAction extends AbstractAction
+class GenerateSitemapAction extends AbstractAction
 {
     protected SitemapGenerator $sitemapGenerator;
 
+    /**
+     * The sitemap XML as a string.
+     *
+     * @var string|null
+     */
     protected $sitemapXml;
+
+    protected $basePath;
 
     /**
      * Inject dependencies from a DI Container.
@@ -28,6 +35,7 @@ class SitemapAction extends AbstractAction
         parent::setDependencies($container);
 
         $this->sitemapGenerator = $container['charcoal/sitemap/generator'];
+        $this->basePath = $container['config']['base_path'] ?? getcwd();
     }
 
     /**
@@ -39,11 +47,19 @@ class SitemapAction extends AbstractAction
      */
     public function run(RequestInterface $request, ResponseInterface $response)
     {
-        $this->setMode(self::MODE_XML);
+        $this->setSuccess(false);
+        $this->setMode(self::MODE_JSON);
+        $xml = $this->sitemapGenerator->generate();
 
-        $this->sitemapXml = $this->sitemapGenerator->generate();
+        if (!empty($xml)) {
+            $sitemapPath = rtrim($this->basePath, '/\\') . DIRECTORY_SEPARATOR . 'www' . DIRECTORY_SEPARATOR . 'sitemap.xml';
+            $this->setSuccess(true);
 
-        $this->setSuccess(true);
+            if (file_put_contents($sitemapPath, $xml, LOCK_EX) === false) {
+                $this->setSuccess(false);
+                throw new \RuntimeException(sprintf('Unable to write sitemap to "%s".', $sitemapPath));
+            }
+        }
 
         return $response;
     }
@@ -55,6 +71,6 @@ class SitemapAction extends AbstractAction
      */
     public function results()
     {
-        return $this->sitemapXml;
+        return [ 'success' => $this->success() ];
     }
 }
